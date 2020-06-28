@@ -1,2 +1,3 @@
-/test.pdf
+*.pdf
 /.idea
+*.pdf
