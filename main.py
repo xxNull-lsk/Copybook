@@ -9,50 +9,13 @@ import datetime
 from PinYin import PinYin
 
 
-class MyApp:
+class UiPinYin(QtWidgets.QWidget):
     pinyin = PinYin()
 
-    def on_click_ok(self):
-        self.pinyin = PinYin()
-        self.btn_ok.setEnabled(False)
-        try:
-            txt = self.edit_text.toPlainText().split()
-            pdf_path = self.edit_file_name.text()
-            self.pinyin.create(pdf_path)
-
-            self.pinyin.col_text_colors = self.combo_colors.currentData()
-            self.pinyin.line_color = self.combo_line_color.currentData()
-
-            curr_type = self.combo_types.currentText()
-            if curr_type == '不描字':
-                self.pinyin.draw_text_pre_line(txt)
-            elif curr_type == '全描字':
-                self.pinyin.draw_text_pre_line(txt, repeat=1)
-            elif curr_type == '半描字':
-                self.pinyin.draw_text_pre_line(txt, repeat=0.5)
-            elif curr_type == '常规':
-                self.pinyin.draw_mutilate_text(txt)
-
-            self.pinyin.close()
-
-            # 预览
-            if platform == 'win32':
-                os.startfile(pdf_path)
-            elif platform == 'linux':
-                subprocess.call(["xdg-open", pdf_path])
-            elif platform == 'darwin':
-                subprocess.call(["open", pdf_path])
-        finally:
-            self.btn_ok.setEnabled(True)
-
     def __init__(self):
-        self.app = QtWidgets.QApplication(sys.argv)
-        widget = QtWidgets.QWidget()
-        widget.resize(360, 360)
-        widget.setWindowTitle("字帖生成器")
-
+        super().__init__()
         grid = QGridLayout()
-        widget.setLayout(grid)
+        self.setLayout(grid)
         grid.setSpacing(16)
         grid.setContentsMargins(32, 16, 32, 16)
 
@@ -132,6 +95,66 @@ class MyApp:
         self.btn_ok = QtWidgets.QPushButton("确认")
         self.btn_ok.clicked.connect(self.on_click_ok)
         grid.addWidget(self.btn_ok, row, 1, alignment=QtCore.Qt.AlignCenter)
+
+    def on_click_ok(self):
+        self.pinyin = PinYin()
+        self.btn_ok.setEnabled(False)
+        try:
+            txt = self.edit_text.toPlainText().split()
+            pdf_path = self.edit_file_name.text()
+            self.pinyin.create(pdf_path)
+
+            self.pinyin.col_text_colors = self.combo_colors.currentData()
+            self.pinyin.line_color = self.combo_line_color.currentData()
+
+            curr_type = self.combo_types.currentText()
+            if curr_type == '不描字':
+                self.pinyin.draw_text_pre_line(txt)
+            elif curr_type == '全描字':
+                self.pinyin.draw_text_pre_line(txt, repeat=1)
+            elif curr_type == '半描字':
+                self.pinyin.draw_text_pre_line(txt, repeat=0.5)
+            elif curr_type == '常规':
+                self.pinyin.draw_mutilate_text(txt)
+
+            self.pinyin.close()
+
+            # 预览
+            if platform == 'win32':
+                os.startfile(pdf_path)
+            elif platform == 'linux':
+                subprocess.call(["xdg-open", pdf_path])
+            elif platform == 'darwin':
+                subprocess.call(["open", pdf_path])
+        finally:
+            self.btn_ok.setEnabled(True)
+
+
+class MyApp:
+    def __init__(self):
+        self.app = QtWidgets.QApplication(sys.argv)
+        widget = QtWidgets.QWidget()
+        widget.resize(360, 360)
+        widget.setWindowTitle("字帖生成器")
+
+        self.root_layout = QtWidgets.QHBoxLayout(widget)
+
+        self.right_layout = QtWidgets.QVBoxLayout(widget)
+        self.right_layout.setContentsMargins(10, 10, 10, 10)
+        self.right_layout.setSpacing(20)
+        self.right_layout.setAlignment(QtCore.Qt.AlignTop)
+        self.right_layout.addWidget(QtWidgets.QLabel('拼音'))
+        self.right_layout.addWidget(QtWidgets.QLabel('汉字'))
+
+        self.left_layout = QtWidgets.QStackedLayout()
+        self.pinyin = UiPinYin()
+        self.left_layout.addWidget(self.pinyin)
+
+        self.root_layout.setSpacing(0)
+        self.root_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.root_layout.addLayout(self.right_layout)
+        self.root_layout.addLayout(self.left_layout)
 
         screen = QtWidgets.QDesktopWidget().screenGeometry()
         size = widget.geometry()
