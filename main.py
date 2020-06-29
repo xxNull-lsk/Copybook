@@ -7,6 +7,134 @@ from PyQt5.QtWidgets import QGridLayout
 import datetime
 
 from PinYin import PinYin
+from HanZi import HanZi
+
+
+class UiHanZi(QtWidgets.QWidget):
+
+    def __init__(self):
+        super().__init__()
+        grid = QGridLayout()
+        self.setLayout(grid)
+        grid.setSpacing(16)
+        grid.setContentsMargins(32, 16, 32, 16)
+
+        row = -1
+
+        row += 1
+        label = QtWidgets.QLabel("文件名")
+        grid.addWidget(label, row, 0)
+        self.edit_file_name = QtWidgets.QLineEdit(datetime.datetime.now().strftime('%Y-%m-%d_%H_%M_%S') + '.pdf')
+        grid.addWidget(self.edit_file_name, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("线条颜色")
+        grid.addWidget(label, row, 0)
+        self.combo_line_color = QtWidgets.QComboBox()
+        self.combo_line_color.addItem('浅绿', 'lightgreen')
+        self.combo_line_color.addItem('粉色', 'lightpink')
+        self.combo_line_color.addItem('黑色', 'black')
+        grid.addWidget(self.combo_line_color, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("方格类型")
+        grid.addWidget(label, row, 0)
+        self.combo_grid_type = QtWidgets.QComboBox()
+        self.combo_grid_type.addItem('米字格', HanZi.GRID_TYPE_MI)
+        self.combo_grid_type.addItem('田字格', HanZi.GRID_TYPE_TIAN)
+        grid.addWidget(self.combo_grid_type, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("文字颜色")
+        grid.addWidget(label, row, 0)
+        self.combo_colors = QtWidgets.QComboBox()
+        self.combo_colors.addItem('首行黑色，其余浅灰', ['black', 'lightgrey'])
+        self.combo_colors.addItem('全部黑色', ['black'])
+        self.combo_colors.addItem('全部浅灰', ['lightgrey'])
+        self.combo_colors.addItem('首行粉色，其余浅灰', ['lightpink', 'lightgrey'])
+        self.combo_colors.addItem('全部粉色', ['lightpink'])
+        grid.addWidget(self.combo_colors, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("字体")
+        grid.addWidget(label, row, 0)
+        self.combo_fonts = QtWidgets.QComboBox()
+        fonts = list(HanZi.fonts.keys())
+        # fonts.sort()
+        for font_name in fonts:
+            self.combo_fonts.addItem(font_name)
+        self.combo_fonts.currentIndexChanged.connect(self.on_font_changed)
+        grid.addWidget(self.combo_fonts, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("样式")
+        grid.addWidget(label, row, 0)
+        self.combo_types = QtWidgets.QComboBox()
+        self.combo_types.addItem('常规')
+        self.combo_types.addItem('不描字')
+        self.combo_types.addItem('半描字')
+        self.combo_types.addItem('全描字')
+        self.combo_types.setCurrentText('全描字')
+        grid.addWidget(self.combo_types, row, 1)
+
+        row += 1
+        label = QtWidgets.QLabel("内容")
+        grid.addWidget(label, row, 0)
+        self.edit_text = QtWidgets.QTextEdit()
+        self.edit_text.setText('内容')
+        self.edit_text.setWordWrapMode(QtGui.QTextOption.WrapAnywhere)
+        self.edit_text.setMinimumWidth(260)
+        self.edit_text.setMinimumHeight(150)
+        grid.addWidget(self.edit_text, row, 1)
+
+        row += 1
+        self.btn_ok = QtWidgets.QPushButton("生成汉字字帖")
+        self.btn_ok.clicked.connect(self.on_click_ok)
+        grid.addWidget(self.btn_ok, row, 1, alignment=QtCore.Qt.AlignCenter)
+        self.on_font_changed()
+
+    def on_click_ok(self):
+        hanzi = HanZi()
+        try:
+            txt = self.edit_text.toPlainText()
+            pdf_path = self.edit_file_name.text()
+            hanzi.create(pdf_path)
+
+            hanzi.col_text_colors = self.combo_colors.currentData()
+            hanzi.line_color = self.combo_line_color.currentData()
+            hanzi.grid_type = self.combo_grid_type.currentData()
+            hanzi.set_font(self.combo_fonts.currentText())
+
+            curr_type = self.combo_types.currentText()
+            if curr_type == '不描字':
+                hanzi.draw_text_pre_line(txt)
+            elif curr_type == '全描字':
+                hanzi.draw_text_pre_line(txt, repeat=1)
+            elif curr_type == '半描字':
+                hanzi.draw_text_pre_line(txt, repeat=0.5)
+            elif curr_type == '常规':
+                hanzi.draw_mutilate_text(txt)
+
+            hanzi.close()
+
+            # 预览
+            if platform == 'win32':
+                os.startfile(pdf_path)
+            elif platform == 'linux':
+                subprocess.call(["xdg-open", pdf_path])
+            elif platform == 'darwin':
+                subprocess.call(["open", pdf_path])
+        finally:
+            self.btn_ok.setEnabled(True)
+
+    def on_font_changed(self):
+        font_name = self.combo_fonts.currentText()
+        font_id = QtGui.QFontDatabase.addApplicationFont(HanZi.fonts[font_name]['font_file'])
+        fonts = QtGui.QFontDatabase.applicationFontFamilies(font_id)
+        font = QtGui.QFont()
+        font.setFamily(fonts[0])
+        font.setPointSize(18)
+        self.edit_text.setFont(font)
 
 
 class UiPinYin(QtWidgets.QWidget):
@@ -55,6 +183,7 @@ class UiPinYin(QtWidgets.QWidget):
         self.combo_types.addItem('不描字')
         self.combo_types.addItem('半描字')
         self.combo_types.addItem('全描字')
+        self.combo_types.setCurrentText('全描字')
         grid.addWidget(self.combo_types, row, 1)
 
         row += 1
@@ -92,7 +221,7 @@ class UiPinYin(QtWidgets.QWidget):
         self.edit_text2.setFont(font)
 
         row += 1
-        self.btn_ok = QtWidgets.QPushButton("确认")
+        self.btn_ok = QtWidgets.QPushButton("生成拼音字帖")
         self.btn_ok.clicked.connect(self.on_click_ok)
         grid.addWidget(self.btn_ok, row, 1, alignment=QtCore.Qt.AlignCenter)
 
@@ -130,39 +259,60 @@ class UiPinYin(QtWidgets.QWidget):
             self.btn_ok.setEnabled(True)
 
 
-class MyApp:
+class MyMainWindow(QtWidgets.QWidget):
     def __init__(self):
-        self.app = QtWidgets.QApplication(sys.argv)
-        widget = QtWidgets.QWidget()
-        widget.resize(360, 360)
-        widget.setWindowTitle("字帖生成器")
+        super().__init__(parent=QtWidgets.QDesktopWidget())
+        self.resize(360, 360)
+        self.setWindowTitle("字帖生成器")
 
-        self.root_layout = QtWidgets.QHBoxLayout(widget)
+        self.root_layout = QtWidgets.QHBoxLayout(self)
 
-        self.right_layout = QtWidgets.QVBoxLayout(widget)
+        # 初始化右侧布局
+        self.right_layout = QtWidgets.QVBoxLayout()
         self.right_layout.setContentsMargins(10, 10, 10, 10)
         self.right_layout.setSpacing(20)
         self.right_layout.setAlignment(QtCore.Qt.AlignTop)
-        self.right_layout.addWidget(QtWidgets.QLabel('拼音'))
-        self.right_layout.addWidget(QtWidgets.QLabel('汉字'))
+        self.btn_pinyin = QtWidgets.QPushButton('拼音')
+        # self.btn_pinyin.setIcon()
+        self.btn_pinyin.setFixedWidth(120)
+        self.btn_pinyin.clicked.connect(self.on_pinyin)
+        self.right_layout.addWidget(self.btn_pinyin)
+        self.btn_hanzi = QtWidgets.QPushButton('汉字')
+        # self.btn_haizi.setIcon()
+        self.btn_hanzi.setFixedWidth(120)
+        self.btn_hanzi.clicked.connect(self.on_hanzi)
+        self.right_layout.addWidget(self.btn_hanzi)
 
+        # 初始化左侧布局
         self.left_layout = QtWidgets.QStackedLayout()
         self.pinyin = UiPinYin()
         self.left_layout.addWidget(self.pinyin)
+        self.hanzi = UiHanZi()
+        self.left_layout.addWidget(self.hanzi)
 
+        # 初始化整体布局
         self.root_layout.setSpacing(0)
         self.root_layout.setContentsMargins(0, 0, 0, 0)
-
         self.root_layout.addLayout(self.right_layout)
         self.root_layout.addLayout(self.left_layout)
 
+        # 显示窗口
         screen = QtWidgets.QDesktopWidget().screenGeometry()
-        size = widget.geometry()
-        widget.move(int((screen.width() - size.width()) / 2),
-                    int((screen.height() - size.height()) / 2))
-        widget.show()
-        sys.exit(self.app.exec())
+        size = self.geometry()
+        self.move(int((screen.width() - size.width()) / 2),
+                  int((screen.height() - size.height()) / 2))
+
+    def on_pinyin(self):
+        self.btn_pinyin.setFocus()
+        self.left_layout.setCurrentIndex(0)
+
+    def on_hanzi(self):
+        self.btn_hanzi.setFocus()
+        self.left_layout.setCurrentIndex(1)
 
 
 if __name__ == '__main__':
-    app = MyApp()
+    app = QtWidgets.QApplication(sys.argv)
+    ex = MyMainWindow()
+    ex.show()
+    sys.exit(app.exec())

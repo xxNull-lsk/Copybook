@@ -10,12 +10,10 @@ class HanZi:
     curr_page = -1
     curr_index = -1
 
+    GRID_TYPE_MI = 0
+    GRID_TYPE_TIAN = 0
+
     fonts = {
-        '田英章楷书': {
-            'font_file': 'fonts/田英章楷书.ttf',
-            'font_size': 26,
-            'font_scan': 0.8
-        },
         '楷体': {
             'font_file': 'fonts/楷体_GB2312.ttf',
             'font_size': 26,
@@ -31,6 +29,11 @@ class HanZi:
             'font_size': 26,
             'font_scan': 0.8
         },
+        '田英章楷书': {
+            'font_file': 'fonts/田英章楷书.ttf',
+            'font_size': 26,
+            'font_scan': 0.8
+        },
         '战加东硬笔楷书': {
             'font_file': 'fonts/战加东硬笔楷书.ttf',
             'font_size': 26,
@@ -43,11 +46,21 @@ class HanZi:
         }
     }
 
+    def set_font(self, font_name):
+        if font_name not in self.fonts.keys():
+            return False
+        self.font_name = font_name + '1'
+        self.font_file = self.fonts[font_name]['font_file']
+        self.font_size = self.fonts[font_name]['font_size']
+        self.font_scan = self.fonts[font_name]['font_scan']
+        return True
+
     def __init__(self, page_width=21, page_height=29.7, start_x=0.5, start_y=1.60, font_name='楷体'):
         self.font_name = font_name + '1'
         self.font_file = self.fonts[font_name]['font_file']
         self.font_size = self.fonts[font_name]['font_size']
         self.font_scan = self.fonts[font_name]['font_scan']
+        self.grid_type = self.GRID_TYPE_MI
 
         self.page_width = page_width
         self.page_height = page_height
@@ -143,7 +156,10 @@ class HanZi:
         for row in range(0, self.line_count):
             x = self.start_x
             y = self.start_y + row * (self.item_height + self.line_space)
-            self._draw_mi(x, y)
+            if self.grid_type == self.GRID_TYPE_MI:
+                self._draw_mi(x, y)
+            elif self.grid_type == self.GRID_TYPE_TIAN:
+                self._draw_tian(x, y)
 
     def _next(self):
         self.curr_index = self.curr_index + 1
