@@ -2,6 +2,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
+from reportlab import rl_config
 
 
 class HanZi:
@@ -10,6 +11,11 @@ class HanZi:
     curr_index = -1
 
     fonts = {
+        '田英章楷书': {
+            'font_file': 'fonts/田英章楷书.ttf',
+            'font_size': 26,
+            'font_scan': 0.8
+        },
         '楷体': {
             'font_file': 'fonts/楷体_GB2312.ttf',
             'font_size': 26,
@@ -81,6 +87,7 @@ class HanZi:
 
     def _set_font(self, size):
         print(self.font_name, self.font_file)
+        rl_config.autoGenerateMissingTTFName = True
         pdfmetrics.registerFont(TTFont(self.font_name, self.font_file))
         self.canv.setFont(self.font_name, size)
 
@@ -212,10 +219,11 @@ class HanZi:
 
 
 if __name__ == '__main__':
-    for name in ['楷体', '华文楷体', '庞中华钢笔字体', '战加东硬笔楷书', '蝉羽真颜金戈']:
+    # for name in ['楷体', '华文楷体', '庞中华钢笔字体', '战加东硬笔楷书', '蝉羽真颜金戈', '田英章楷书']:
+    for name in ['田英章楷书']:
         hanzi = HanZi(font_name=name)
         hanzi.create(name + '.pdf')
-        hanzi.draw_text_pre_line('''
+        hanzi.draw_mutilate_text('''
 云蒸沧海，雨润桑田。阴阳世界，造化黎元。
 羲农开辟，轩昊承传。魃凌涿鹿，熊奋阪泉。
 四凶伏罪，群兽听宣。垂裳拱手，击壤欢颜。

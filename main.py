@@ -50,7 +50,7 @@ class MyApp:
         widget = QtWidgets.QWidget()
         widget.resize(360, 360)
         widget.setWindowTitle("字帖生成器")
-        
+
         grid = QGridLayout()
         widget.setLayout(grid)
         grid.setSpacing(16)
