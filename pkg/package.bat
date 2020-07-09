@@ -1,0 +1,1 @@
+pyinstaller -w Copybook.spec

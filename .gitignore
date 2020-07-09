@@ -2,3 +2,5 @@
 /.idea
 *.pdf
 /__pycache__
+/pkg/dist
+/pkg/build
