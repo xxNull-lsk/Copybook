@@ -9,6 +9,12 @@ import datetime
 from PinYin import PinYin
 from HanZi import HanZi
 
+if getattr(sys, 'frozen', False):  # 是否Bundle Resource
+    base_path = sys._MEIPASS
+else:
+    base_path = os.path.abspath(".")
+font_path = os.path.join(base_path, 'fonts')
+
 
 class UiHanZi(QtWidgets.QWidget):
 
@@ -31,7 +37,7 @@ class UiHanZi(QtWidgets.QWidget):
         label = QtWidgets.QLabel("线条颜色")
         grid.addWidget(label, row, 0)
         self.combo_line_color = QtWidgets.QComboBox()
-        self.combo_line_color.addItem('浅绿', 'lightgreen')
+        self.combo_line_color.addItem('浅绿',  'rgb(199, 238, 206)')
         self.combo_line_color.addItem('粉色', 'lightpink')
         self.combo_line_color.addItem('黑色', 'black')
         grid.addWidget(self.combo_line_color, row, 1)
@@ -59,7 +65,8 @@ class UiHanZi(QtWidgets.QWidget):
         label = QtWidgets.QLabel("字体")
         grid.addWidget(label, row, 0)
         self.combo_fonts = QtWidgets.QComboBox()
-        fonts = list(HanZi.fonts.keys())
+        self.hanzi = HanZi(font_path)
+        fonts = list(self.hanzi.fonts.keys())
         # fonts.sort()
         for font_name in fonts:
             self.combo_fonts.addItem(font_name)
@@ -94,7 +101,7 @@ class UiHanZi(QtWidgets.QWidget):
         self.on_font_changed()
 
     def on_click_ok(self):
-        hanzi = HanZi()
+        hanzi = HanZi(font_path)
         try:
             txt = self.edit_text.toPlainText()
             pdf_path = self.edit_file_name.text()
@@ -129,16 +136,19 @@ class UiHanZi(QtWidgets.QWidget):
 
     def on_font_changed(self):
         font_name = self.combo_fonts.currentText()
-        font_id = QtGui.QFontDatabase.addApplicationFont(HanZi.fonts[font_name]['font_file'])
+        font_id = QtGui.QFontDatabase.addApplicationFont(self.hanzi.fonts[font_name]['font_file'])
         fonts = QtGui.QFontDatabase.applicationFontFamilies(font_id)
-        font = QtGui.QFont()
-        font.setFamily(fonts[0])
-        font.setPointSize(18)
-        self.edit_text.setFont(font)
+        if len(fonts) > 0:
+            font = QtGui.QFont()
+            font.setFamily(fonts[0])
+            font.setPointSize(18)
+            self.edit_text.setFont(font)
+        else:
+            print("WARN: Load {} failed".format(self.hanzi.fonts[font_name]['font_file']))
 
 
 class UiPinYin(QtWidgets.QWidget):
-    pinyin = PinYin()
+    pinyin = PinYin(font_path=font_path)
 
     def __init__(self):
         super().__init__()
@@ -159,7 +169,7 @@ class UiPinYin(QtWidgets.QWidget):
         label = QtWidgets.QLabel("线条颜色")
         grid.addWidget(label, row, 0)
         self.combo_line_color = QtWidgets.QComboBox()
-        self.combo_line_color.addItem('浅绿', 'lightgreen')
+        self.combo_line_color.addItem('浅绿', 'rgb(199, 238, 206)')
         self.combo_line_color.addItem('粉色', 'lightpink')
         self.combo_line_color.addItem('黑色', 'black')
         grid.addWidget(self.combo_line_color, row, 1)
@@ -214,11 +224,14 @@ class UiPinYin(QtWidgets.QWidget):
 
         font_id = QtGui.QFontDatabase.addApplicationFont(self.pinyin.font_file)
         fonts = QtGui.QFontDatabase.applicationFontFamilies(font_id)
-        font = QtGui.QFont()
-        font.setFamily(fonts[0])
-        font.setPointSize(24)
-        self.edit_text.setFont(font)
-        self.edit_text2.setFont(font)
+        if len(fonts) > 0:
+            font = QtGui.QFont()
+            font.setFamily(fonts[0])
+            font.setPointSize(24)
+            self.edit_text.setFont(font)
+            self.edit_text2.setFont(font)
+        else:
+            print("WARN: Load {} failed".format(self.pinyin.font_file))
 
         row += 1
         self.btn_ok = QtWidgets.QPushButton("生成拼音字帖")
@@ -226,7 +239,7 @@ class UiPinYin(QtWidgets.QWidget):
         grid.addWidget(self.btn_ok, row, 1, alignment=QtCore.Qt.AlignCenter)
 
     def on_click_ok(self):
-        self.pinyin = PinYin()
+        self.pinyin = PinYin(font_path=font_path)
         self.btn_ok.setEnabled(False)
         try:
             txt = self.edit_text.toPlainText().split()
@@ -264,6 +277,7 @@ class MyMainWindow(QtWidgets.QWidget):
         super().__init__(parent=QtWidgets.QDesktopWidget())
         self.resize(360, 360)
         self.setWindowTitle("字帖生成器")
+        self.setWindowIcon(QtGui.QIcon(os.path.join(base_path, 'app.ico')))
 
         self.root_layout = QtWidgets.QHBoxLayout(self)
 

@@ -2,7 +2,9 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
+from reportlab.lib import colors
 from reportlab import rl_config
+import os
 
 
 class HanZi:
@@ -11,40 +13,7 @@ class HanZi:
     curr_index = -1
 
     GRID_TYPE_MI = 0
-    GRID_TYPE_TIAN = 0
-
-    fonts = {
-        '楷体': {
-            'font_file': 'fonts/楷体_GB2312.ttf',
-            'font_size': 26,
-            'font_scan': 0.85
-        },
-        '华文楷体': {
-            'font_file': 'fonts/华文楷体.ttf',
-            'font_size': 26,
-            'font_scan': 0.82
-        },
-        '庞中华钢笔字体': {
-            'font_file': 'fonts/庞中华钢笔字体.ttf',
-            'font_size': 26,
-            'font_scan': 0.8
-        },
-        '田英章楷书': {
-            'font_file': 'fonts/田英章楷书.ttf',
-            'font_size': 26,
-            'font_scan': 0.8
-        },
-        '战加东硬笔楷书': {
-            'font_file': 'fonts/战加东硬笔楷书.ttf',
-            'font_size': 26,
-            'font_scan': 0.85
-        },
-        '蝉羽真颜金戈': {
-            'font_file': 'fonts/蝉羽真颜金戈.ttf',
-            'font_size': 26,
-            'font_scan': 0.82
-        }
-    }
+    GRID_TYPE_TIAN = 1
 
     def set_font(self, font_name):
         if font_name not in self.fonts.keys():
@@ -55,7 +24,39 @@ class HanZi:
         self.font_scan = self.fonts[font_name]['font_scan']
         return True
 
-    def __init__(self, page_width=21, page_height=29.7, start_x=0.5, start_y=1.60, font_name='楷体'):
+    def __init__(self, font_path, page_width=21, page_height=29.7, start_x=0.5, start_y=1.60, font_name='楷体'):
+        self.fonts = {
+            '楷体': {
+                'font_file': os.path.join(font_path, '楷体_GB2312.ttf'),
+                'font_size': 26,
+                'font_scan': 0.85
+            },
+            '华文楷体': {
+                'font_file': os.path.join(font_path, '华文楷体.ttf'),
+                'font_size': 26,
+                'font_scan': 0.82
+            },
+            '庞中华钢笔字体': {
+                'font_file': os.path.join(font_path, '庞中华钢笔字体.ttf'),
+                'font_size': 26,
+                'font_scan': 0.8
+            },
+            '田英章楷书': {
+                'font_file': os.path.join(font_path, '田英章楷书.ttf'),
+                'font_size': 26,
+                'font_scan': 0.8
+            },
+            '战加东硬笔楷书': {
+                'font_file': os.path.join(font_path, '战加东硬笔楷书.ttf'),
+                'font_size': 26,
+                'font_scan': 0.85
+            },
+            '蝉羽真颜金戈': {
+                'font_file': os.path.join(font_path, '蝉羽真颜金戈.ttf'),
+                'font_size': 26,
+                'font_scan': 0.82
+            }
+        }
         self.font_name = font_name + '1'
         self.font_file = self.fonts[font_name]['font_file']
         self.font_size = self.fonts[font_name]['font_size']
@@ -75,7 +76,7 @@ class HanZi:
         self.item_width = 1.0
         self.item_height = 1.0
 
-        self.line_color = 'lightgreen'
+        self.line_color = colors.Color(199, 238, 206)
         self.col_text_colors = ['lightgrey']  # 全部浅灰
 
         col_count = self.doc_width / self.item_height

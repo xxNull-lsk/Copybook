@@ -2,6 +2,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
+import os
 
 
 class PinYin:
@@ -26,9 +27,9 @@ class PinYin:
     curr_page = -1
     curr_index = -1
 
-    def __init__(self, page_width=21, page_height=29.7, start_x=0.8, start_y=1.5, col_count=5):
+    def __init__(self, font_path, page_width=21, page_height=29.7, start_x=0.8, start_y=1.5, col_count=5):
         self.font_name = '汉语拼音'
-        self.font_file = 'fonts/汉语拼音.ttf'
+        self.font_file = os.path.join(font_path, '汉语拼音.ttf')
         self.font_size = 28
         self.font_scan = 0.67
 
