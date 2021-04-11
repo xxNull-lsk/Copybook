@@ -92,8 +92,17 @@ class PinYin:
             y = self.start_y + row * (self.line_height + self.line_space)
             self._draw_4_line(x, y)
 
+    def _end_line(self):
+        curr_row = int(self.curr_index / self.col_count) - self.line_count * self.curr_page
+        curr_col = int(self.curr_index % self.col_count)
+        row, col = self._next()
+        while row == curr_row:
+            row, col = self._next()
+        self.curr_index -= 1
+        return row, col
+
     def _next(self):
-        self.curr_index = self.curr_index + 1
+        self.curr_index += 1
         page_index = int(self.curr_index / self.col_count / self.line_count)
         if self.curr_page != page_index:
             if self.curr_page != -1:
@@ -108,6 +117,12 @@ class PinYin:
         return row, col
 
     def draw_text(self, txt, color=None):
+        if txt == '-':  # - 为占位符
+            self._next()
+            return
+        elif txt == '*':  # - 为占位符
+            self._end_line()
+            return
         row, col = self._next()
         if txt == '' or txt is None:
             return
@@ -138,7 +153,9 @@ class PinYin:
         for t in txt:
             line_text.append(t)
             for i in range(0, self.col_count - 1):
-                if (i + 1) / self.col_count > repeat:
+                if t == '-':  # - 为占位符
+                    line_text.append('')
+                elif (i + 1) / self.col_count > repeat:
                     line_text.append('')
                 else:
                     line_text.append(t)

@@ -48,6 +48,7 @@ class UiHanZi(QtWidgets.QWidget):
         self.combo_grid_type = QtWidgets.QComboBox()
         self.combo_grid_type.addItem('米字格', HanZi.GRID_TYPE_MI)
         self.combo_grid_type.addItem('田字格', HanZi.GRID_TYPE_TIAN)
+        self.combo_grid_type.addItem('方格', HanZi.GRID_TYPE_FANG)
         grid.addWidget(self.combo_grid_type, row, 1)
 
         row += 1
@@ -112,15 +113,18 @@ class UiHanZi(QtWidgets.QWidget):
             hanzi.grid_type = self.combo_grid_type.currentData()
             hanzi.set_font(self.combo_fonts.currentText())
 
-            curr_type = self.combo_types.currentText()
-            if curr_type == '不描字':
-                hanzi.draw_text_pre_line(txt)
-            elif curr_type == '全描字':
-                hanzi.draw_text_pre_line(txt, repeat=1)
-            elif curr_type == '半描字':
-                hanzi.draw_text_pre_line(txt, repeat=0.5)
-            elif curr_type == '常规':
-                hanzi.draw_mutilate_text(txt)
+            if txt == '':
+                hanzi.draw_bank()
+            else:
+                curr_type = self.combo_types.currentText()
+                if curr_type == '不描字':
+                    hanzi.draw_text_pre_line(txt)
+                elif curr_type == '全描字':
+                    hanzi.draw_text_pre_line(txt, repeat=1)
+                elif curr_type == '半描字':
+                    hanzi.draw_text_pre_line(txt, repeat=0.5)
+                elif curr_type == '常规':
+                    hanzi.draw_mutilate_text(txt)
 
             hanzi.close()
 

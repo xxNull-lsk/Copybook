@@ -14,6 +14,7 @@ class HanZi:
 
     GRID_TYPE_MI = 0
     GRID_TYPE_TIAN = 1
+    GRID_TYPE_FANG = 2
 
     def set_font(self, font_name):
         if font_name not in self.fonts.keys():
@@ -105,6 +106,49 @@ class HanZi:
         pdfmetrics.registerFont(TTFont(self.font_name, self.font_file))
         self.canv.setFont(self.font_name, size)
 
+    def _draw_fang(self, _x, _y):
+        x = _x
+        y = self.page_height - _y
+        self.canv.setDash([])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= self.item_height / 2
+        # self.canv.setDash([2, 2])
+        # self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= self.item_height / 2
+        self.canv.setDash([])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+
+        for index in range(0, self.col_count * 2 + 1):
+            if index % 2 == 1:
+                # self.canv.setDash([2, 2])
+                continue
+            else:
+                self.canv.setDash([])
+            x = _x + index * self.item_width / 2
+            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
+
+    def _draw_hui(self, _x, _y):
+        # TODO:
+        x = _x
+        y = self.page_height - _y
+        self.canv.setDash([])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= self.item_height / 2
+        # self.canv.setDash([2, 2])
+        # self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= self.item_height / 2
+        self.canv.setDash([])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+
+        for index in range(0, self.col_count * 2 + 1):
+            if index % 2 == 1:
+                # self.canv.setDash([2, 2])
+                continue
+            else:
+                self.canv.setDash([])
+            x = _x + index * self.item_width / 2
+            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
+
     def _draw_tian(self, _x, _y):
         x = _x
         y = self.page_height - _y
@@ -161,6 +205,8 @@ class HanZi:
                 self._draw_mi(x, y)
             elif self.grid_type == self.GRID_TYPE_TIAN:
                 self._draw_tian(x, y)
+            elif self.grid_type == self.GRID_TYPE_FANG:
+                self._draw_fang(x, y)
 
     def _next(self):
         self.curr_index = self.curr_index + 1
