@@ -49,6 +49,7 @@ class UiHanZi(QtWidgets.QWidget):
         self.combo_grid_type.addItem('米字格', HanZi.GRID_TYPE_MI)
         self.combo_grid_type.addItem('田字格', HanZi.GRID_TYPE_TIAN)
         self.combo_grid_type.addItem('方格', HanZi.GRID_TYPE_FANG)
+        self.combo_grid_type.addItem('回宫格', HanZi.GRID_TYPE_HUI)
         grid.addWidget(self.combo_grid_type, row, 1)
 
         row += 1

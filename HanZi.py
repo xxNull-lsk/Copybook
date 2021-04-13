@@ -15,6 +15,7 @@ class HanZi:
     GRID_TYPE_MI = 0
     GRID_TYPE_TIAN = 1
     GRID_TYPE_FANG = 2
+    GRID_TYPE_HUI = 3
 
     def set_font(self, font_name):
         if font_name not in self.fonts.keys():
@@ -128,26 +129,23 @@ class HanZi:
             self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
 
     def _draw_hui(self, _x, _y):
-        # TODO:
         x = _x
         y = self.page_height - _y
         self.canv.setDash([])
         self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        # self.canv.setDash([2, 2])
-        # self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        self.canv.setDash([])
+        y -= self.item_height
         self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
 
-        for index in range(0, self.col_count * 2 + 1):
-            if index % 2 == 1:
-                # self.canv.setDash([2, 2])
-                continue
-            else:
-                self.canv.setDash([])
-            x = _x + index * self.item_width / 2
+        for col in range(0, self.col_count + 1):
+            x = _x + col * self.item_width
             self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
+
+        height = self.item_height * 0.7  # 该比例不一定正确。没有找到相关资料。该比例是量出来的。
+        width = height * 0.618
+        y = self.page_height - _y - (self.item_height - height) / 2
+        for col in range(0, self.col_count):
+            x = _x + col * self.item_width + (self.item_width - width) / 2
+            self.canv.rect(x * cm, y * cm, width * cm, -height * cm)
 
     def _draw_tian(self, _x, _y):
         x = _x
@@ -207,6 +205,8 @@ class HanZi:
                 self._draw_tian(x, y)
             elif self.grid_type == self.GRID_TYPE_FANG:
                 self._draw_fang(x, y)
+            elif self.grid_type == self.GRID_TYPE_HUI:
+                self._draw_hui(x, y)
 
     def _next(self):
         self.curr_index = self.curr_index + 1
