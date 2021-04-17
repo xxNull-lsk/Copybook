@@ -26,37 +26,42 @@ class HanZi:
         self.font_scan = self.fonts[font_name]['font_scan']
         return True
 
-    def __init__(self, font_path, page_width=21, page_height=29.7, start_x=0.5, start_y=1.60, font_name='楷体'):
+    def __init__(self, font_path, page_width=21, page_height=29.7, col_count=12, row_count=15, font_name='楷体'):
         self.fonts = {
             '楷体': {
                 'font_file': os.path.join(font_path, '楷体_GB2312.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.85
             },
             '华文楷体': {
                 'font_file': os.path.join(font_path, '华文楷体.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.82
             },
             '庞中华钢笔字体': {
                 'font_file': os.path.join(font_path, '庞中华钢笔字体.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.8
             },
             '田英章楷书': {
                 'font_file': os.path.join(font_path, '田英章楷书.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.8
             },
             '战加东硬笔楷书': {
                 'font_file': os.path.join(font_path, '战加东硬笔楷书.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.85
             },
             '蝉羽真颜金戈': {
                 'font_file': os.path.join(font_path, '蝉羽真颜金戈.ttf'),
-                'font_size': 26,
+                'font_size': 38,
                 'font_scan': 0.82
+            },
+            '博洋楷体7000': {
+                'font_file': os.path.join(font_path, '博洋楷体7000.ttf'),
+                'font_size': 38,
+                'font_scan': 0.85
             }
         }
         self.font_name = font_name + '1'
@@ -67,27 +72,29 @@ class HanZi:
 
         self.page_width = page_width
         self.page_height = page_height
-        self.start_x = start_x
-        self.start_y = start_y
 
-        self.doc_width = self.page_width - self.start_x * 2
-        self.doc_height = self.page_height - self.start_y * 2
+        self.item_width = 1.5
+        self.item_height = 1.5
 
-        self.line_space = 0.5
+        self.line_space = 0.2
 
-        self.item_width = 1.0
-        self.item_height = 1.0
+        self.doc_width = col_count * self.item_width
+        self.doc_height = row_count * self.item_height + (row_count - 1) * self.line_space
+        if self.doc_height > self.page_height:
+            max_doc_height = self.page_height - self.line_space * 2
+            row_count = int((max_doc_height + self.line_space) / (self.item_height + self.line_space))
+            self.doc_height = row_count * self.item_height + (row_count - 1) * self.line_space
+
+        self.start_x = (self.page_width - self.doc_width) / 2
+        self.start_y = (self.page_height - self.doc_height) / 2
 
         self.line_color = colors.Color(199, 238, 206)
         self.col_text_colors = ['lightgrey']  # 全部浅灰
 
-        col_count = self.doc_width / self.item_height
-        self.col_count = int(col_count)
+        self.col_count = col_count
         print('doc_width', self.doc_width, 'col_count', self.col_count, col_count)
-
-        line_count = (self.doc_height + self.line_space) / (self.item_height + self.line_space)
-        self.line_count = int(line_count)
-        print('doc_height', self.doc_height, 'line_count', self.line_count, line_count)
+        self.row_count = row_count
+        print('doc_height', self.doc_height, 'row_count', self.row_count, row_count)
 
     def __del__(self):
         self.close()
@@ -196,7 +203,7 @@ class HanZi:
     def draw_bank(self):
         self.canv.setStrokeColor(self.line_color)
         self.canv.setLineWidth(1)
-        for row in range(0, self.line_count):
+        for row in range(0, self.row_count):
             x = self.start_x
             y = self.start_y + row * (self.item_height + self.line_space)
             if self.grid_type == self.GRID_TYPE_MI:
@@ -210,7 +217,7 @@ class HanZi:
 
     def _next(self):
         self.curr_index = self.curr_index + 1
-        page_index = int(self.curr_index / self.col_count / self.line_count)
+        page_index = int(self.curr_index / self.col_count / self.row_count)
         if self.curr_page != page_index:
             if self.curr_page != -1:
                 self.canv.showPage()
@@ -219,7 +226,7 @@ class HanZi:
             self.draw_bank()
             self.curr_page = page_index
 
-        row = int(self.curr_index / self.col_count) - self.line_count * self.curr_page
+        row = int(self.curr_index / self.col_count) - self.row_count * self.curr_page
         col = int(self.curr_index % self.col_count)
         return row, col
 
