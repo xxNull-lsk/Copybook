@@ -4,7 +4,6 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab import rl_config
-import os
 
 
 class HanZi:
@@ -26,44 +25,9 @@ class HanZi:
         self.font_scan = self.fonts[font_name]['font_scan']
         return True
 
-    def __init__(self, font_path, page_width=21, page_height=29.7, col_count=12, row_count=15, font_name='楷体'):
-        self.fonts = {
-            '楷体': {
-                'font_file': os.path.join(font_path, '楷体_GB2312.ttf'),
-                'font_size': 38,
-                'font_scan': 0.85
-            },
-            '华文楷体': {
-                'font_file': os.path.join(font_path, '华文楷体.ttf'),
-                'font_size': 38,
-                'font_scan': 0.82
-            },
-            '庞中华钢笔字体': {
-                'font_file': os.path.join(font_path, '庞中华钢笔字体.ttf'),
-                'font_size': 38,
-                'font_scan': 0.8
-            },
-            '田英章楷书': {
-                'font_file': os.path.join(font_path, '田英章楷书.ttf'),
-                'font_size': 38,
-                'font_scan': 0.8
-            },
-            '战加东硬笔楷书': {
-                'font_file': os.path.join(font_path, '战加东硬笔楷书.ttf'),
-                'font_size': 38,
-                'font_scan': 0.85
-            },
-            '蝉羽真颜金戈': {
-                'font_file': os.path.join(font_path, '蝉羽真颜金戈.ttf'),
-                'font_size': 38,
-                'font_scan': 0.82
-            },
-            '博洋楷体7000': {
-                'font_file': os.path.join(font_path, '博洋楷体7000.ttf'),
-                'font_size': 38,
-                'font_scan': 0.85
-            }
-        }
+    def __init__(self, fonts, max_page_count=-1, page_width=21, page_height=29.7, font_name='楷体'):
+        self.max_page_count = max_page_count
+        self.fonts = fonts
         self.font_name = font_name + '1'
         self.font_file = self.fonts[font_name]['font_file']
         self.font_size = self.fonts[font_name]['font_size']
@@ -75,26 +39,26 @@ class HanZi:
 
         self.item_width = 1.5
         self.item_height = 1.5
-
         self.line_space = 0.2
+        self.side_space = 1
 
-        self.doc_width = col_count * self.item_width
-        self.doc_height = row_count * self.item_height + (row_count - 1) * self.line_space
-        if self.doc_height > self.page_height:
-            max_doc_height = self.page_height - self.line_space * 2
-            row_count = int((max_doc_height + self.line_space) / (self.item_height + self.line_space))
-            self.doc_height = row_count * self.item_height + (row_count - 1) * self.line_space
+        self.doc_width = self.page_width - self.side_space * 2
+        self.doc_height = self.page_height - self.side_space * 2
+
+        self.col_count = int(self.doc_width / self.item_width)
+        self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
+
+        self.doc_width = self.col_count * self.item_width
+        self.doc_height = self.row_count * (self.item_height + self.line_space) - self.line_space
 
         self.start_x = (self.page_width - self.doc_width) / 2
         self.start_y = (self.page_height - self.doc_height) / 2
 
-        self.line_color = colors.Color(199, 238, 206)
+        self.line_color = [colors.Color(199, 238, 206), colors.Color(199, 238, 206)]
         self.col_text_colors = ['lightgrey']  # 全部浅灰
 
-        self.col_count = col_count
-        print('doc_width', self.doc_width, 'col_count', self.col_count, col_count)
-        self.row_count = row_count
-        print('doc_height', self.doc_height, 'row_count', self.row_count, row_count)
+        print('doc_width', self.doc_width, 'col_count', self.col_count)
+        print('doc_height', self.doc_height, 'row_count', self.row_count)
 
     def __del__(self):
         self.close()
@@ -115,93 +79,81 @@ class HanZi:
         self.canv.setFont(self.font_name, size)
 
     def _draw_fang(self, _x, _y):
-        x = _x
-        y = self.page_height - _y
+        # 绘制每列的竖线
+        y = self.page_height - _y - self.item_height
         self.canv.setDash([])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        # self.canv.setDash([2, 2])
-        # self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        self.canv.setDash([])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-
-        for index in range(0, self.col_count * 2 + 1):
-            if index % 2 == 1:
-                # self.canv.setDash([2, 2])
-                continue
-            else:
-                self.canv.setDash([])
-            x = _x + index * self.item_width / 2
-            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
-
-    def _draw_hui(self, _x, _y):
-        x = _x
-        y = self.page_height - _y
-        self.canv.setDash([])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-
+        self.canv.setStrokeColor(self.line_color[0])
         for col in range(0, self.col_count + 1):
             x = _x + col * self.item_width
             self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
 
+        # 绘制每行的外框
+        x = _x
+        y = self.page_height - _y - self.item_height
+        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color[0])
+        self.canv.rect(x * cm, y * cm, self.doc_width * cm, self.item_height * cm)
+
+    def _draw_hui(self, _x, _y):
+        # 绘制内框
         height = self.item_height * 0.7  # 该比例不一定正确。没有找到相关资料。该比例是量出来的。
         width = height * 0.618
         y = self.page_height - _y - (self.item_height - height) / 2
         for col in range(0, self.col_count):
+            self.canv.setStrokeColor(self.line_color[1])
             x = _x + col * self.item_width + (self.item_width - width) / 2
             self.canv.rect(x * cm, y * cm, width * cm, -height * cm)
 
+        self._draw_fang(_x, _y)
+
     def _draw_tian(self, _x, _y):
+        # 绘制每格的中心水平虚线
         x = _x
-        y = self.page_height - _y
-        self.canv.setDash([])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
+        y = self.page_height - _y - self.item_height / 2
         self.canv.setDash([2, 2])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color[1])
         self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
 
-        for index in range(0, self.col_count * 2 + 1):
-            if index % 2 == 1:
-                self.canv.setDash([2, 2])
-            else:
-                self.canv.setDash([])
-            x = _x + index * self.item_width / 2
-            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
+        # 绘制每列中间的竖线
+        y = self.page_height - _y
+        self.canv.setDash([2, 2])
+        self.canv.setStrokeColor(self.line_color[1])
+        for index in range(0, self.col_count):
+            x = _x + (index + 0.5) * self.item_width
+            self.canv.line(x * cm, (y - self.item_height) * cm, x * cm, y * cm)
+
+        self._draw_fang(_x, _y)
 
     def _draw_mi(self, _x, _y):
+        # 绘制每格的中心水平虚线
         x = _x
         y = self.page_height - _y
-        self.canv.setDash([])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
         y -= self.item_height / 2
         self.canv.setDash([2, 2])
-        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
-        y -= self.item_height / 2
-        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color[1])
         self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
 
-        for index in range(0, self.col_count * 2 + 1):
-            if index % 2 == 1:
-                self.canv.setDash([2, 2])
-            else:
-                self.canv.setDash([])
-            x = _x + index * self.item_width / 2
-            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
-
+        # 绘制每格的斜线
+        y = self.page_height - _y - self.item_height
         for index in range(0, self.col_count):
             self.canv.setDash([2, 2])
+            self.canv.setStrokeColor(self.line_color[1])
             x = _x + index * self.item_width
             self.canv.line(x * cm, y * cm, (x + self.item_width) * cm, (y + self.item_height) * cm)
             self.canv.line((x + self.item_width) * cm, y * cm, x * cm, (y + self.item_height) * cm)
 
+        # 绘制每列中间的竖线
+        y = self.page_height - _y
+        self.canv.setDash([2, 2])
+        self.canv.setStrokeColor(self.line_color[1])
+        for index in range(0, self.col_count):
+            x = _x + (index + 0.5) * self.item_width
+            self.canv.line(x * cm, (y - self.item_height) * cm, x * cm, y * cm)
+
+        self._draw_fang(_x, _y)
+
     def draw_bank(self):
-        self.canv.setStrokeColor(self.line_color)
+        self.canv.setStrokeColor(self.line_color[0])
         self.canv.setLineWidth(1)
         for row in range(0, self.row_count):
             x = self.start_x
@@ -218,6 +170,9 @@ class HanZi:
     def _next(self):
         self.curr_index = self.curr_index + 1
         page_index = int(self.curr_index / self.col_count / self.row_count)
+        if 0 <= self.max_page_count < page_index:
+            return -1, -1
+
         if self.curr_page != page_index:
             if self.curr_page != -1:
                 self.canv.showPage()
@@ -232,7 +187,7 @@ class HanZi:
 
     def draw_text(self, txt, color=None):
         row, col = self._next()
-        if txt == '' or txt is None:
+        if txt == '' or txt is None or row < 0:
             return
 
         if color is None:

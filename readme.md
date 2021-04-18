@@ -5,6 +5,7 @@
 ```bash
 pip3 install PyQt5
 pip3 install reportlab
+pip3 install PyMuPDF
 ```
 
 ## 运行程序
