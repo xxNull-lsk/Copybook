@@ -23,7 +23,7 @@ python3 main.py
 
 按照要求生成拼音字帖。
 
-![拼音界面](./res/pinyin.png)
+![拼音界面](./readme.res/pinyin.png)
 
 1. 线条颜色
 
@@ -52,11 +52,11 @@ python3 main.py
 
    ## 生成的拼音字帖
 
-   ![](./res/pinyin-pdf.png)
+   ![](./readme.res/pinyin-pdf.png)
 
 # 汉字字帖
 
-![](./res/hanzi.png)
+![](./readme.res/hanzi.png)
 
 1. 线条颜色
 
@@ -85,6 +85,6 @@ python3 main.py
 
    生成的PDF中的文字内容。
    
-   ![](./res/hanzi-pdf1.png)
+   ![](./readme.res/hanzi-pdf1.png)
 
-![](./res/hanzi-pdf2.png)
+![](./readme.res/hanzi-pdf2.png)

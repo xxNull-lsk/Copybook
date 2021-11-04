@@ -6,4 +6,5 @@
 /pkg/build
 /build
 /dist
+__pycache__
 
