@@ -1,9 +1,9 @@
 import sys
 import os
-from PyQt5.QtCore import Qt, QPoint, QRect
-from PyQt5.QtGui import QIcon, QFocusEvent, QPalette, QColor, QPaintEvent, QPainter, QBrush, QPolygonF, QImage
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtGui import QIcon, QPalette, QColor, QPaintEvent, QPainter, QBrush, QPolygonF, QImage
 from PyQt5.QtWidgets import QPushButton, QDesktopWidget, QWidget, QHBoxLayout, QVBoxLayout, QStackedLayout, \
-    QApplication, QRadioButton
+    QApplication
 
 from ui.HanZi import UiHanZi
 from ui.PinYin import UiPinYin
@@ -15,14 +15,15 @@ else:
 font_path = os.path.join(base_path, 'fonts')
 
 version = {
-    "curr": "0.0.4",
+    "curr": "0.0.5",
     "history": {
         "0.0.1": "实现基本的拼音字帖和汉字字帖",
         "0.0.2": "1. 支持方格\n"
                  "2. 支持回宫格",
         "0.0.3": "1. 支持预览\n"
                  "2. 优化汉字字帖生成逻辑",
-        "0.0.4": "优化界面"
+        "0.0.4": "优化界面",
+        "0.0.5": "支持实时预览"
     }
 }
 

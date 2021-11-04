@@ -29,7 +29,7 @@ class PinYin:
 
     def __init__(self, font_path, page_width=21, page_height=29.7, start_x=0.8, start_y=1.5, col_count=5):
         self.font_name = '汉语拼音'
-        self.font_file = os.path.join(font_path, '汉语拼音.ttf')
+        self.font_file = os.path.join(font_path, '拼音', '汉语拼音.ttf')
         self.font_size = 28
         self.font_scan = 0.67
 

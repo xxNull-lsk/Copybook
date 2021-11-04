@@ -1,2 +1,4 @@
 PyQt5~=5.15.1
 reportlab~=3.5.13
+PyMuPDF~=1.19.1
+fitz~=0.0.1.dev2
