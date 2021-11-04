@@ -1,7 +1,8 @@
 import sys
 import os
-from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtGui import QIcon, QPalette, QColor, QPaintEvent, QPainter, QBrush, QPolygonF, QImage
+
+from PyQt5.QtCore import Qt, QRect, QTimer
+from PyQt5.QtGui import QIcon, QPalette, QColor, QPaintEvent, QPainter, QBrush, QPolygonF, QImage, QScreen
 from PyQt5.QtWidgets import QPushButton, QDesktopWidget, QWidget, QHBoxLayout, QVBoxLayout, QStackedLayout, \
     QApplication
 
@@ -15,7 +16,7 @@ else:
 font_path = os.path.join(base_path, 'fonts')
 
 version = {
-    "curr": "0.0.5",
+    "curr": "0.1.6",
     "history": {
         "0.0.1": "实现基本的拼音字帖和汉字字帖",
         "0.0.2": "1. 支持方格\n"
@@ -23,7 +24,8 @@ version = {
         "0.0.3": "1. 支持预览\n"
                  "2. 优化汉字字帖生成逻辑",
         "0.0.4": "优化界面",
-        "0.0.5": "支持实时预览"
+        "0.0.5": "支持实时预览",
+        "0.1.6": "升级reportlab，解决某些ttf字体时会出错，导致程序崩溃的问题。"
     }
 }
 
@@ -82,12 +84,11 @@ class MyButton(QPushButton):
 
 
 class MyMainWindow(QWidget):
-    def __init__(self):
-        super().__init__(parent=QDesktopWidget())
-        self.resize(360, 360)
+    def __init__(self, screen: QScreen):
+        super().__init__(parent=None)
         self.setWindowTitle("字帖生成器 {}".format(version["curr"]))
         self.setWindowIcon(load_icon('app.png'))
-
+        self.screen = screen
         self.root_layout = QHBoxLayout(self)
 
         # 初始化右侧布局
@@ -119,11 +120,17 @@ class MyMainWindow(QWidget):
         self.root_layout.addWidget(left)
         self.root_layout.addLayout(self.right_side)
 
-        # 显示窗口
-        screen = QDesktopWidget().screenGeometry()
-        size = self.geometry()
-        self.move(int((screen.width() - size.width()) / 2),
-                  int((screen.height() - size.height()) / 2))
+        # Fixme:直接调用的话会因为窗口大小不对而不居中。
+        self.t = QTimer()
+        self.t.timeout.connect(self.center)
+        self.t.start(10)
+
+    def center(self):
+        self.t.stop()
+        screen = self.screen.availableSize()
+        rect = self.geometry()
+        self.move(int((screen.width() - rect.width()) / 2),
+                  int((screen.height() - rect.height()) / 2))
 
 
 def main():
@@ -131,7 +138,7 @@ def main():
         print(version["curr"])
         return
     app = QApplication(sys.argv)
-    ex = MyMainWindow()
+    ex = MyMainWindow(app.primaryScreen())
     ex.show()
     sys.exit(app.exec())
 
