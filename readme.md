@@ -3,8 +3,7 @@
 ## 安装依赖包
 
 ```bash
-pip3 install PyQt5
-pip3 install reportlab
+pip3 install -r requirements.txt
 ```
 
 ## 运行程序
@@ -12,10 +11,6 @@ pip3 install reportlab
 ```bas
 python3 main.py
 ```
-
-# 已知问题
-
-1. reportlab处理某些ttf字体时会出错，导致生成PDF文件失败。
 
 
 
@@ -88,3 +83,9 @@ python3 main.py
    ![](./readme.res/hanzi-pdf1.png)
 
 ![](./readme.res/hanzi-pdf2.png)
+
+
+
+# 开发
+
+http://home.mydata.top:8093/?cat=10
