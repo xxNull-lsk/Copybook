@@ -123,7 +123,6 @@ class MyMainWindow(QWidget):
         self.t.timeout.connect(self.center)
         self.t.start(10)
         check_newest()
-        events.signal_pop_message.emit("直接调用的话会因为窗口大小不对而不居中。")
 
     def center(self):
         self.t.stop()
