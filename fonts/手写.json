@@ -5,6 +5,7 @@
         "font_size": 38,
         "font_scan": 0.85
     },
+    "skip": [],
     "fonts":
     {
         "楷体": {

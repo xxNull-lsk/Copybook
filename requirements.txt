@@ -1,4 +1,6 @@
 PyQt5~=5.15.1
+PyQt5-tools~=5.15.1
 reportlab~=3.6.2
-PyMuPDF~=1.19.1
+PyMuPDF==1.19.1
 fitz~=0.0.1.dev2
+requests==2.26.0
