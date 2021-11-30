@@ -100,7 +100,7 @@ class UiPinYin(QWidget):
             print("WARN: Load {} failed".format(self.pinyin.font_file))
 
         row += 1
-        self.btn_ok = QPushButton("生成拼音字帖")
+        self.btn_ok = QPushButton("  生成拼音字帖  ")
         self.btn_ok.clicked.connect(self.on_click_ok)
         grid.addWidget(self.btn_ok, row, 1, alignment=Qt.AlignCenter)
 

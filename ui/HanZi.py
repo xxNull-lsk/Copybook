@@ -122,7 +122,7 @@ class UiHanZi(QWidget):
         grid.addWidget(self.edit_text, row, 1)
 
         row += 1
-        self.btn_ok = QPushButton("生成汉字字帖")
+        self.btn_ok = QPushButton("  生成汉字字帖  ")
         self.btn_ok.clicked.connect(self.on_click_ok)
         grid.addWidget(self.btn_ok, row, 1, alignment=Qt.AlignCenter)
 
