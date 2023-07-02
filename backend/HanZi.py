@@ -25,7 +25,7 @@ class HanZi:
         self.font_scan = self.fonts[font_name]['font_scan']
         return True
 
-    def __init__(self, fonts, max_page_count=-1, page_width=21, page_height=29.7, font_name='楷体'):
+    def __init__(self, fonts, show_pinyin=False, max_page_count=-1, page_width=21, page_height=29.7, font_name='楷体'):
         self.max_page_count = max_page_count
         self.fonts = fonts
         self.font_name = font_name + '1'
@@ -46,7 +46,13 @@ class HanZi:
         self.doc_height = self.page_height - self.side_space * 2
 
         self.col_count = int(self.doc_width / self.item_width)
-        self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
+
+        self.show_pinyin = show_pinyin
+        if self.show_pinyin:
+            self.line_space += 1
+            self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
+        else:
+            self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
 
         self.doc_width = self.col_count * self.item_width
         self.doc_height = self.row_count * (self.item_height + self.line_space) - self.line_space
@@ -152,12 +158,27 @@ class HanZi:
 
         self._draw_fang(_x, _y)
 
+    def _draw_pinyin(self, _x, _y, line_height):
+        x = _x
+        y = self.page_height - _y
+        self.canv.setDash([])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= line_height / 3
+        self.canv.setDash([2, 2])
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= line_height / 3
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+        y -= line_height / 3
+        self.canv.setDash([])
+
     def draw_bank(self):
         self.canv.setStrokeColor(self.line_color[0])
         self.canv.setLineWidth(1)
         for row in range(0, self.row_count):
             x = self.start_x
             y = self.start_y + row * (self.item_height + self.line_space)
+            if self.show_pinyin:
+                self._draw_pinyin(x, y - 0.8, 0.8)
             if self.grid_type == self.GRID_TYPE_MI:
                 self._draw_mi(x, y)
             elif self.grid_type == self.GRID_TYPE_TIAN:

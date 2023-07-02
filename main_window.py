@@ -87,10 +87,10 @@ class MyMainWindow(QWidget):
 
         # 初始化右侧布局
         self.right_side = QStackedLayout()
-        self.pinyin = UiPinYin(font_path)
-        self.right_side.addWidget(self.pinyin)
         self.hanzi = UiHanZi(font_path)
         self.right_side.addWidget(self.hanzi)
+        self.pinyin = UiPinYin(font_path)
+        self.right_side.addWidget(self.pinyin)
         self.number = UiNumber(font_path)
         self.right_side.addWidget(self.number)
 
@@ -99,10 +99,10 @@ class MyMainWindow(QWidget):
         self.left_side.setSpacing(0)
         self.left_side.setContentsMargins(0, 0, 0, 0)
         self.left_side.setAlignment(Qt.AlignTop)
-        self.btn_pinyin = MyButton('  拼音  ', 0, self.right_side, "pin")
-        self.left_side.addWidget(self.btn_pinyin)
-        self.btn_hanzi = MyButton('  汉字  ', 1, self.right_side, "han")
+        self.btn_hanzi = MyButton('  汉字  ', 0, self.right_side, "han")
         self.left_side.addWidget(self.btn_hanzi)
+        self.btn_pinyin = MyButton('  拼音  ', 1, self.right_side, "pin")
+        self.left_side.addWidget(self.btn_pinyin)
         self.btn_number = MyButton('  数字  ', 2, self.right_side, "number")
         self.left_side.addWidget(self.btn_number)
         left = QWidget()

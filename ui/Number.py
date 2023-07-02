@@ -1,13 +1,14 @@
 import json
 
-import fitz
+from pdf2image import convert_from_path
 import os
 import platform
 import subprocess
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QImage, QTextOption, QFontDatabase, QFont
-from PyQt5.QtWidgets import QFileDialog, QGridLayout, QLabel, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QWidget
+from PyQt5.QtWidgets import QFileDialog, QGridLayout, QLabel, QHBoxLayout, QPushButton, QTextEdit, QComboBox, QWidget, \
+    QSizePolicy
 
 from backend.Number import Number
 
@@ -119,8 +120,12 @@ class UiNumber(QWidget):
         self.btn_ok.clicked.connect(self.on_click_ok)
         grid.addWidget(self.btn_ok, row, 1, alignment=Qt.AlignCenter)
 
+        self.container = QWidget(self)
+        self.container.setLayout(grid)
+        self.container.setMinimumWidth(640)
+        self.container.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         hbox = QHBoxLayout()
-        hbox.addLayout(grid)
+        hbox.addWidget(self.container)
 
         self.preview = QLabel()
         hbox.addWidget(self.preview)
@@ -128,6 +133,10 @@ class UiNumber(QWidget):
         self.setLayout(hbox)
 
         self.on_font_changed()
+
+    def resizeEvent(self, a0):
+        self.do_preview()
+        super().resizeEvent(a0)
 
     def do_draw(self, pdf_path, max_page_count):
         num = Number(self.font_cfg['fonts'], max_page_count)
@@ -158,17 +167,22 @@ class UiNumber(QWidget):
     def do_preview(self):
         pdf_path = "/tmp/1.pdf"
         self.do_draw(pdf_path, 1)
-        with fitz.open(pdf_path) as doc:
-            if doc.page_count <= 0:
-                return
-            page = doc[0]
-            img = page.get_pixmap()
+        images = convert_from_path(pdf_path, fmt='png', dpi=72, last_page=1)
+        if len(images) <= 0:
+            return
+        img = images[0]
 
         os.remove(pdf_path)
-        fmt = QImage.Format_RGBA8888 if img.alpha else QImage.Format_RGB888
-        img = QImage(img.samples, img.width, img.height, img.stride, fmt)
-        self.preview.setPixmap(QPixmap(img))
-        self.preview.setFixedWidth(img.width())
+        img = img.convert("RGBA")
+        data = img.tobytes("raw", "BGRA")
+        im = QImage(data, img.width, img.height, QImage.Format.Format_ARGB32)
+        h = int(self.preview.width() / img.width * img.height)
+        if h > self.preview.height():
+            im1 = im.scaledToHeight(self.preview.height(), Qt.SmoothTransformation)
+        else:
+            im1 = im.scaledToWidth(self.preview.width(), Qt.SmoothTransformation)
+
+        self.preview.setPixmap(QPixmap(im1))
 
     def on_click_ok(self):
         try:
