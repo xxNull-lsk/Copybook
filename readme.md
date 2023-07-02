@@ -113,4 +113,4 @@ python3 main.py
 
 # 开发
 
-http://home.mydata.top:8093/?cat=10
+https://blog.mydata.top/index.php/category/copybook/
