@@ -81,6 +81,7 @@ python3 main.py
    生成的PDF中的文字内容。
    
    ![](./readme.res/hanzi-pdf1.png)
+![](./readme.res/hanzi-with-pinyin-pdf1.png)
 
 ![](./readme.res/hanzi-pdf2.png)
 
