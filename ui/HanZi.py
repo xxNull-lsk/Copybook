@@ -75,12 +75,6 @@ class UiHanZi(QWidget):
         grid.addWidget(self.combo_grid_type, row, 1)
 
         row += 1
-        self.checkbox_pinyin = QCheckBox("拼音")
-        self.checkbox_pinyin.setChecked(True)
-        grid.addWidget(self.checkbox_pinyin, row, 1)
-        self.checkbox_pinyin.clicked.connect(self.do_preview)
-
-        row += 1
         label = QLabel("文字颜色")
         grid.addWidget(label, row, 0)
         self.combo_colors = QComboBox()
@@ -115,7 +109,15 @@ class UiHanZi(QWidget):
         self.combo_types.addItem('半描字')
         self.combo_types.addItem('全描字')
         self.combo_types.currentIndexChanged.connect(self.do_preview)
-        grid.addWidget(self.combo_types, row, 1)
+
+        self.checkbox_pinyin = QCheckBox("看汉字写拼音")
+        self.checkbox_pinyin.setChecked(True)
+        self.checkbox_pinyin.clicked.connect(self.do_preview)
+
+        layout_types = QHBoxLayout()
+        layout_types.addWidget(self.combo_types)
+        layout_types.addWidget(self.checkbox_pinyin)
+        grid.addLayout(layout_types, row, 1)
 
         row += 1
         label = QLabel("内容")

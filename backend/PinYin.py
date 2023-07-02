@@ -9,7 +9,7 @@ class PinYin:
     page_width = 21
     page_height = 29.7
     start_x = 0.8
-    start_y = 1.5
+    start_y = 1.0
 
     doc_width = page_width - start_x * 2
     doc_height = page_height - start_y * 2
@@ -27,11 +27,27 @@ class PinYin:
     curr_page = -1
     curr_index = -1
 
-    def __init__(self, font_path, page_width=21, page_height=29.7, start_x=0.8, start_y=1.5, col_count=5):
+    def __init__(self, font_path, show_hanzi, page_width=21, page_height=29.7, start_x=0.8, start_y=1.0, col_count=5):
         self.font_name = '汉语拼音'
         self.font_file = os.path.join(font_path, '拼音', '汉语拼音.ttf')
         self.font_size = 28
         self.font_scan = 0.67
+        self.show_hanzi = show_hanzi
+
+        if show_hanzi:
+            self.line_space = 0.5
+            self.line_height = 0.95
+            self.line_hanzi = 2.0
+            self.font_size = 18
+            self.font_scan = 0.67
+            col_count = 8
+        else:
+            self.line_space = 0.6
+            self.line_height = 1.5
+            self.line_hanzi = 0
+            self.font_size = 28
+            self.font_scan = 0.67
+            col_count = 5
 
         self.page_width = page_width
         self.page_height = page_height
@@ -44,11 +60,16 @@ class PinYin:
         self.col_count = col_count
         self.col_width = self.doc_width / self.col_count
 
-        self.line_space = 0.6
-        self.line_height = 1.5
         self.line_color = 'lightgreen'
-        self.line_count = int((self.doc_height + self.line_space) / (self.line_height + self.line_space))
+        self.line_count = int((self.doc_height + self.line_space) /
+                              (self.line_height + self.line_hanzi + self.line_space))
         self.col_text_colors = ['lightgrey']  # 全部浅灰
+
+        self.doc_width = self.col_count * self.col_width
+        self.doc_height = self.line_count * (self.line_height + self.line_hanzi + self.line_space) - self.line_space
+
+        self.start_x = (self.page_width - self.doc_width) / 2
+        self.start_y = (self.page_height - self.doc_height) / 2
 
     def __del__(self):
         self.close()
@@ -89,8 +110,44 @@ class PinYin:
         self.canv.setLineWidth(1)
         for row in range(0, self.line_count):
             x = self.start_x
-            y = self.start_y + row * (self.line_height + self.line_space)
+            y = self.start_y + row * (self.line_height + self.line_space + self.line_hanzi)
             self._draw_4_line(x, y)
+            if self.show_hanzi:
+                self._draw_tian(x, y + self.line_height)
+
+    def _draw_fang(self, _x, _y):
+        # 绘制每列的竖线
+        y = self.page_height - _y - self.line_hanzi
+        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color)
+        for col in range(0, self.col_count + 1):
+            x = _x + col * self.col_width
+            self.canv.line(x * cm, y * cm, x * cm, (y + self.line_hanzi) * cm)
+
+        # 绘制每行的外框
+        x = _x
+        y = self.page_height - _y - self.line_hanzi
+        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color)
+        self.canv.rect(x * cm, y * cm, self.doc_width * cm, self.line_hanzi * cm)
+
+    def _draw_tian(self, _x, _y):
+        # 绘制每格的中心水平虚线
+        x = _x
+        y = self.page_height - _y - self.line_hanzi / 2
+        self.canv.setDash([2, 2])
+        self.canv.setStrokeColor(self.line_color)
+        self.canv.line(x * cm, y * cm, (self.doc_width + x) * cm, y * cm)
+
+        # 绘制每列中间的竖线
+        y = self.page_height - _y
+        self.canv.setDash([2, 2])
+        self.canv.setStrokeColor(self.line_color)
+        for index in range(0, self.col_count):
+            x = _x + (index + 0.5) * self.col_width
+            self.canv.line(x * cm, (y - self.line_hanzi) * cm, x * cm, y * cm)
+
+        self._draw_fang(_x, _y)
 
     def _end_line(self):
         curr_row = int(self.curr_index / self.col_count) - self.line_count * self.curr_page
@@ -137,7 +194,8 @@ class PinYin:
             self.canv.setFillColor(color)
 
         x = self.start_x + col * self.col_width
-        y = self.start_y + row * (self.line_height + self.line_space) + self.line_height * self.font_scan
+        y = self.start_y + row * (self.line_height + self.line_space + self.line_hanzi)\
+            + self.line_height * self.font_scan
         txt_width = self.canv.stringWidth(txt)
         x += (self.col_width - txt_width / cm) / 2
         y = self.page_height - y  # 转换坐标系，右上角坐标系，转换成左下角

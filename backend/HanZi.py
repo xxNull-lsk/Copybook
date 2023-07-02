@@ -41,6 +41,7 @@ class HanZi:
         self.item_height = 1.5
         self.line_space = 0.2
         self.side_space = 1
+        self.line_pinyin = 0
 
         self.doc_width = self.page_width - self.side_space * 2
         self.doc_height = self.page_height - self.side_space * 2
@@ -49,13 +50,16 @@ class HanZi:
 
         self.show_pinyin = show_pinyin
         if self.show_pinyin:
-            self.line_space += 1
-            self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
+            self.line_pinyin = 0.8
+            self.row_count = int((self.doc_height + self.line_space) /
+                                 (self.item_height + self.line_pinyin + self.line_space))
         else:
-            self.row_count = int((self.doc_height + self.line_space) / (self.item_height + self.line_space))
+            self.line_pinyin = 0
+            self.row_count = int((self.doc_height + self.line_space) /
+                                 (self.item_height + self.line_pinyin + self.line_space))
 
         self.doc_width = self.col_count * self.item_width
-        self.doc_height = self.row_count * (self.item_height + self.line_space) - self.line_space
+        self.doc_height = self.row_count * (self.item_height + self.line_pinyin + self.line_space) - self.line_space
 
         self.start_x = (self.page_width - self.doc_width) / 2
         self.start_y = (self.page_height - self.doc_height) / 2
@@ -176,9 +180,10 @@ class HanZi:
         self.canv.setLineWidth(1)
         for row in range(0, self.row_count):
             x = self.start_x
-            y = self.start_y + row * (self.item_height + self.line_space)
+            y = self.start_y + row * (self.item_height + self.line_pinyin + self.line_space)
             if self.show_pinyin:
-                self._draw_pinyin(x, y - 0.8, 0.8)
+                self._draw_pinyin(x, y, self.line_pinyin)
+                y += self.line_pinyin
             if self.grid_type == self.GRID_TYPE_MI:
                 self._draw_mi(x, y)
             elif self.grid_type == self.GRID_TYPE_TIAN:
@@ -221,7 +226,8 @@ class HanZi:
             self.canv.setFillColor(color)
 
         x = self.start_x + col * self.item_width
-        y = self.start_y + row * (self.item_height + self.line_space) + self.item_height * self.font_scan
+        y = self.start_y + row * (self.item_height + self.line_pinyin + self.line_space)\
+            + self.line_pinyin + self.item_height * self.font_scan
         txt_width = self.canv.stringWidth(txt)
         x += (self.item_width - txt_width / cm) / 2
         y = self.page_height - y  # 转换坐标系，右上角坐标系，转换成左下角
@@ -256,7 +262,7 @@ class HanZi:
         for t in txt:
             line_text.append(t)
             for i in range(0, self.col_count - 1):
-                if (i + 1) / self.col_count > repeat:
+                if i + 1 >= self.col_count * repeat:
                     line_text.append('')
                 else:
                     line_text.append(t)
@@ -267,7 +273,7 @@ class HanZi:
 if __name__ == '__main__':
     # for name in ['楷体', '华文楷体', '庞中华钢笔字体', '战加东硬笔楷书', '蝉羽真颜金戈', '田英章楷书']:
     for name in ['田英章楷书']:
-        hanzi = HanZi(font_name=name)
+        hanzi = HanZi(fonts=name)
         hanzi.create(name + '.pdf')
         hanzi.draw_mutilate_text('''
 云蒸沧海，雨润桑田。阴阳世界，造化黎元。

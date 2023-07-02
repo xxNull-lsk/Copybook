@@ -19,6 +19,7 @@ python3 main.py
 按照要求生成拼音字帖。
 
 ![拼音界面](./readme.res/pinyin.png)
+   ![拼音界面](./readme.res/pinyin-hanzi.png)
 
 1. 线条颜色
 

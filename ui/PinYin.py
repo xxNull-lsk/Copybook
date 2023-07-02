@@ -7,7 +7,7 @@ from pdf2image import convert_from_path
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QTextOption, QFontDatabase, QFont, QImage, QPixmap
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QLineEdit, QComboBox, QTextEdit, QPushButton, QHBoxLayout, \
-    QSizePolicy
+    QSizePolicy, QCheckBox
 
 from backend.PinYin import PinYin
 
@@ -17,7 +17,7 @@ class UiPinYin(QWidget):
     def __init__(self, font_path):
         super().__init__()
         self.font_path = font_path
-        self.pinyin = PinYin(font_path=self.font_path)
+        self.pinyin = PinYin(font_path=self.font_path, show_hanzi=False)
         grid = QGridLayout()
         grid.setSpacing(16)
         grid.setContentsMargins(32, 16, 32, 16)
@@ -60,8 +60,16 @@ class UiPinYin(QWidget):
         self.combo_types.addItem('不描字')
         self.combo_types.addItem('半描字')
         self.combo_types.addItem('全描字')
-        grid.addWidget(self.combo_types, row, 1)
         self.combo_types.setCurrentIndex(0)
+
+        self.checkbox_hanzi = QCheckBox("看拼音写字")
+        self.checkbox_hanzi.setChecked(True)
+        self.checkbox_hanzi.clicked.connect(self.do_preview)
+
+        box_type = QHBoxLayout()
+        box_type.addWidget(self.combo_types)
+        box_type.addWidget(self.checkbox_hanzi)
+        grid.addLayout(box_type, row, 1)
 
         row += 1
         label = QLabel("声调")
@@ -142,7 +150,7 @@ class UiPinYin(QWidget):
             self.btn_ok.setEnabled(True)
 
     def do_draw(self, pdf_path):
-        self.pinyin = PinYin(font_path=self.font_path)
+        self.pinyin = PinYin(font_path=self.font_path, show_hanzi=self.checkbox_hanzi.isChecked())
         txt = self.edit_text.toPlainText().split()
         self.pinyin.create(pdf_path)
 
