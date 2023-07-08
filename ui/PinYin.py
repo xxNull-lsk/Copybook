@@ -2,6 +2,7 @@ import datetime
 import os
 import subprocess
 from sys import platform
+import tempfile
 
 from pdf2image import convert_from_path
 from PyQt5.QtCore import Qt
@@ -170,7 +171,7 @@ class UiPinYin(QWidget):
         self.pinyin.close()
 
     def do_preview(self):
-        pdf_path = "/tmp/1.pdf"
+        pdf_path = tempfile.mktemp()
         self.do_draw(pdf_path)
         images = convert_from_path(pdf_path, fmt='png', dpi=72, last_page=1)
         if len(images) <= 0:

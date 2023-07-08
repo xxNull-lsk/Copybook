@@ -3,7 +3,7 @@ import sys
 
 from PyQt5.QtCore import Qt, QRect, QTimer
 from PyQt5.QtGui import QIcon, QPalette, QColor, QPaintEvent, QPainter, QBrush, QImage, QScreen
-from PyQt5.QtWidgets import QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QStackedLayout, QSystemTrayIcon
+from PyQt5.QtWidgets import QPushButton, QWidget, QHBoxLayout, QVBoxLayout, QStackedLayout, QSystemTrayIcon, QMessageBox
 
 from backend.stat import check_newest
 from events import events
@@ -75,6 +75,8 @@ class MyButton(QPushButton):
 class MyMainWindow(QWidget):
     def __init__(self, screen: QScreen):
         super().__init__(parent=None)
+        if sys.platform =='win32':
+            os.environ["PATH"] = os.environ["PATH"]+";" + os.path.join(base_path, "res", "bin")
         events.signal_check_newest.connect(self.on_check_newest)
         events.signal_pop_message.connect(self.on_pop_message)
         self.tray = QSystemTrayIcon(self)

@@ -1,4 +1,5 @@
 import json
+import tempfile
 
 from pdf2image import convert_from_path
 import os
@@ -19,7 +20,7 @@ class UiNumber(QWidget):
 
     def load_fonts(self):
         # 加载字体配置
-        with open(os.path.join(self.font_path, "数字.json"), 'r') as f:
+        with open(os.path.join(self.font_path, "数字.json"), 'r', encoding="utf-8") as f:
             self.font_cfg = json.load(f)
         for f in self.font_cfg['fonts'].keys():
             self.font_cfg['fonts'][f]['font_file'] = os.path.join(
@@ -165,7 +166,7 @@ class UiNumber(QWidget):
         return pdf_path
 
     def do_preview(self):
-        pdf_path = "/tmp/1.pdf"
+        pdf_path = tempfile.mktemp()
         self.do_draw(pdf_path, 1)
         images = convert_from_path(pdf_path, fmt='png', dpi=72, last_page=1)
         if len(images) <= 0:
