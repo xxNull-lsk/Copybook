@@ -1,4 +1,6 @@
+mv res/bin .
 pyinstaller Copybook.spec
+mv ./bin res/
 
 cd dist
 version=`./CopyBook -v`
