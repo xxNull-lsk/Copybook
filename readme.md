@@ -19,7 +19,10 @@ python3 main.py
 按照要求生成拼音字帖。
 
 ![拼音界面](./readme.res/pinyin.png)
-   ![拼音界面](./readme.res/pinyin-hanzi.png)
+![拼音界面](./readme.res/pinyin-hanzi.png)
+![拼音界面](./readme.res/Windows-pinyin.PNG)
+
+
 
 1. 线条颜色
 
@@ -53,6 +56,7 @@ python3 main.py
 # 汉字字帖
 
 ![](./readme.res/hanzi.png)
+![](./readme.res/Windows-hanzi.PNG)
 
 1. 线条颜色
 
@@ -89,6 +93,7 @@ python3 main.py
 # 数字字帖
 
 ![number](./readme.res/number.png)
+![number](./readme.res/Windows-number.PNG)
 
 1. 线条颜色
 
