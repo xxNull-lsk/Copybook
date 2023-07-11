@@ -1,3 +1,6 @@
+# 下载地址
+百度网盘链接：https://pan.baidu.com/s/1jYhvQNSqF-ghJbeeA0MSuw 提取码:ihbi
+下载链接：https://home.mydata.top:8095/share/dkxS22x1 提取码：1wde
 # 安装方法
 
 ## 安装依赖包
