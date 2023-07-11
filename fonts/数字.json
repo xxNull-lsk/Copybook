@@ -9,7 +9,7 @@
     "fonts":
     {
         "楷体": {
-            "font_file": "楷体_GB2312.ttf",
+            "font_file": "楷体.ttf",
             "font_size": 38,
             "font_scan": 0.85
         },

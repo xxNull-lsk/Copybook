@@ -29,9 +29,10 @@ class HanZi:
         self.max_page_count = max_page_count
         self.fonts = fonts
         self.font_name = font_name + '1'
-        self.font_file = self.fonts[font_name]['font_file']
-        self.font_size = self.fonts[font_name]['font_size']
-        self.font_scan = self.fonts[font_name]['font_scan']
+        cfg = self.fonts[font_name]
+        self.font_file = cfg['font_file']
+        self.font_size = cfg['font_size']
+        self.font_scan = cfg['font_scan']
         self.grid_type = self.GRID_TYPE_MI
 
         self.page_width = page_width
@@ -43,6 +44,19 @@ class HanZi:
         self.side_space = 1
         self.line_pinyin = 0
 
+        if "item_width" in cfg.keys():
+            self.item_width = cfg["item_width"]
+
+        if "item_height" in cfg.keys():
+            self.item_height = cfg["item_height"]
+
+        if "line_space" in cfg.keys():
+            self.line_space = cfg["line_space"]
+
+        if "side_space" in cfg.keys():
+            self.side_space = cfg["side_space"]
+
+
         self.doc_width = self.page_width - self.side_space * 2
         self.doc_height = self.page_height - self.side_space * 2
 
@@ -50,7 +64,10 @@ class HanZi:
 
         self.show_pinyin = show_pinyin
         if self.show_pinyin:
-            self.line_pinyin = 0.8
+            if "line_pinyin" in cfg.keys():
+                self.line_pinyin = cfg["line_pinyin"]
+            else:
+                self.line_pinyin = 0.8
             self.row_count = int((self.doc_height + self.line_space) /
                                  (self.item_height + self.line_pinyin + self.line_space))
         else:

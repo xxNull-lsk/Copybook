@@ -1,4 +1,5 @@
 import json
+import re
 import tempfile
 from pdf2image import convert_from_path
 import os
@@ -108,6 +109,7 @@ class UiHanZi(QWidget):
         self.combo_types.addItem('不描字')
         self.combo_types.addItem('半描字')
         self.combo_types.addItem('全描字')
+        self.combo_types.addItem('隔行')
         self.combo_types.currentIndexChanged.connect(self.do_preview)
 
         self.checkbox_pinyin = QCheckBox("看汉字写拼音")
@@ -154,7 +156,7 @@ class UiHanZi(QWidget):
         super().resizeEvent(a0)
 
     def do_draw(self, pdf_path, max_page_count):
-        hanzi = HanZi(self.font_cfg['fonts'], self.checkbox_pinyin.isChecked(), max_page_count)
+        hanzi = HanZi(self.font_cfg['fonts'], self.checkbox_pinyin.isChecked(), max_page_count, font_name=self.combo_fonts.currentText())
         try:
             txt = self.edit_text.toPlainText()
             hanzi.create(pdf_path)
@@ -162,7 +164,6 @@ class UiHanZi(QWidget):
             hanzi.col_text_colors = self.combo_colors.currentData()
             hanzi.line_color = self.combo_line_color.currentData()
             hanzi.grid_type = self.combo_grid_type.currentData()
-            hanzi.set_font(self.combo_fonts.currentText())
 
             if txt == '':
                 hanzi.draw_bank()
@@ -175,6 +176,18 @@ class UiHanZi(QWidget):
                 elif curr_type == '半描字':
                     hanzi.draw_text_pre_line(txt, repeat=0.5)
                 elif curr_type == '常规':
+                    hanzi.draw_mutilate_text(txt)
+                elif curr_type == '隔行':
+                    lines = re.findall('.{%d}' % hanzi.col_count, txt)
+                    last = txt[len(lines) * hanzi.col_count:]
+                    txt = ''
+                    for line in lines:
+                        if last == '' and txt != '':
+                            txt = txt + ' ' * hanzi.col_count
+                        txt = txt + line
+                        if last != '':
+                            txt = txt + ' ' * hanzi.col_count
+                    txt += last
                     hanzi.draw_mutilate_text(txt)
         finally:
             hanzi.close()

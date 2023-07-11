@@ -9,9 +9,24 @@
     "fonts":
     {
         "楷体": {
-            "font_file": "楷体_GB2312.ttf",
+            "font_file": "楷体.ttf",
             "font_size": 38,
             "font_scan": 0.85
+        },
+        "隶书": {
+            "font_file": "隶书.TTF",
+            "font_size": 38,
+            "font_scan": 0.85
+        },
+        "三极曹全碑隶书简": {
+            "font_file": "三极曹全碑隶书简.ttf",
+            "font_size": 35,
+            "font_scan": 0.85,
+            "item_width": 1.3,
+            "item_height": 1.3,
+            "line_space": 0.2,
+            "side_space": 1.0,
+            "line_pinyin": 0.6
         },
         "华文楷体": {
             "font_file": "华文楷体.ttf",
