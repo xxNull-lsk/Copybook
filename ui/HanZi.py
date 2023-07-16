@@ -68,10 +68,11 @@ class UiHanZi(QWidget):
         label = QLabel("方格类型")
         grid.addWidget(label, row, 0)
         self.combo_grid_type = QComboBox()
+        self.combo_grid_type.addItem('方格', HanZi.GRID_TYPE_FANG)
         self.combo_grid_type.addItem('米字格', HanZi.GRID_TYPE_MI)
         self.combo_grid_type.addItem('田字格', HanZi.GRID_TYPE_TIAN)
-        self.combo_grid_type.addItem('方格', HanZi.GRID_TYPE_FANG)
         self.combo_grid_type.addItem('回宫格', HanZi.GRID_TYPE_HUI)
+        self.combo_grid_type.addItem('竖行', HanZi.GRID_TYPE_VERTICAL)
         self.combo_grid_type.currentIndexChanged.connect(self.do_preview)
         grid.addWidget(self.combo_grid_type, row, 1)
 
@@ -159,11 +160,15 @@ class UiHanZi(QWidget):
         hanzi = HanZi(self.font_cfg['fonts'], self.checkbox_pinyin.isChecked(), max_page_count, font_name=self.combo_fonts.currentText())
         try:
             txt = self.edit_text.toPlainText()
+            txt = txt.replace('\t', '')
+            txt = txt.replace('\r', '')
             hanzi.create(pdf_path)
 
             hanzi.col_text_colors = self.combo_colors.currentData()
             hanzi.line_color = self.combo_line_color.currentData()
             hanzi.grid_type = self.combo_grid_type.currentData()
+
+            hanzi.clac()
 
             if txt == '':
                 hanzi.draw_bank()
@@ -178,22 +183,36 @@ class UiHanZi(QWidget):
                 elif curr_type == '常规':
                     hanzi.draw_mutilate_text(txt)
                 elif curr_type == '隔行':
-                    lines = re.findall('.{%d}' % hanzi.col_count, txt)
-                    last = txt[len(lines) * hanzi.col_count:]
-                    txt = ''
-                    for line in lines:
-                        if last == '' and txt != '':
-                            txt = txt + ' ' * hanzi.col_count
-                        txt = txt + line
-                        if last != '':
-                            txt = txt + ' ' * hanzi.col_count
-                    txt += last
+                    if hanzi.grid_type >= HanZi.GRID_TYPE_VERTICAL:
+                        lines = re.findall('.{%d}' % hanzi.row_count, txt)
+                        last = txt[len(lines) * hanzi.row_count:]
+                        txt = ''
+                        for line in lines:
+                            txt = txt + ' ' * hanzi.row_count + line
+                        txt = txt + ' ' * hanzi.row_count
+                        txt += last
+                    else:
+                        lines = re.findall('.{%d}' % hanzi.col_count, txt)
+                        last = txt[len(lines) * hanzi.col_count:]
+                        txt = ''
+                        for line in lines:
+                            if last == '' and txt != '':
+                                txt = txt + ' ' * hanzi.col_count
+                            txt = txt + line
+                            if last != '':
+                                txt = txt + ' ' * hanzi.col_count
+                        txt += last
                     hanzi.draw_mutilate_text(txt)
         finally:
             hanzi.close()
         return pdf_path
 
     def do_preview(self):
+        if self.combo_grid_type.currentData() == HanZi.GRID_TYPE_VERTICAL:
+            self.checkbox_pinyin.setChecked(False)
+            self.checkbox_pinyin.setEnabled(False)
+        else:
+            self.checkbox_pinyin.setEnabled(True)
         pdf_path = tempfile.mktemp()
         self.do_draw(pdf_path, 1)
         images = convert_from_path(pdf_path, fmt='png', dpi=72, last_page=1)

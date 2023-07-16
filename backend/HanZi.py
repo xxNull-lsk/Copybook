@@ -15,11 +15,12 @@ class HanZi:
     GRID_TYPE_TIAN = 1
     GRID_TYPE_FANG = 2
     GRID_TYPE_HUI = 3
+    GRID_TYPE_VERTICAL = 20
 
     def set_font(self, font_name):
         if font_name not in self.fonts.keys():
             return False
-        self.font_name = font_name + '1'
+        self.font_name = font_name
         self.font_file = self.fonts[font_name]['font_file']
         self.font_size = self.fonts[font_name]['font_size']
         self.font_scan = self.fonts[font_name]['font_scan']
@@ -28,7 +29,7 @@ class HanZi:
     def __init__(self, fonts, show_pinyin=False, max_page_count=-1, page_width=21, page_height=29.7, font_name='楷体'):
         self.max_page_count = max_page_count
         self.fonts = fonts
-        self.font_name = font_name + '1'
+        self.font_name = font_name
         cfg = self.fonts[font_name]
         self.font_file = cfg['font_file']
         self.font_size = cfg['font_size']
@@ -56,13 +57,23 @@ class HanZi:
         if "side_space" in cfg.keys():
             self.side_space = cfg["side_space"]
 
+        self.show_pinyin = show_pinyin
 
+        self.line_color = [colors.Color(199, 238, 206), colors.Color(199, 238, 206)]
+        self.col_text_colors = ['lightgrey']  # 全部浅灰
+        
+        self.clac()
+
+    def clac(self):
+        cfg = self.fonts[self.font_name]
         self.doc_width = self.page_width - self.side_space * 2
         self.doc_height = self.page_height - self.side_space * 2
 
         self.col_count = int(self.doc_width / self.item_width)
 
-        self.show_pinyin = show_pinyin
+        if self.grid_type >= self.GRID_TYPE_VERTICAL:
+            self.line_space = 0
+
         if self.show_pinyin:
             if "line_pinyin" in cfg.keys():
                 self.line_pinyin = cfg["line_pinyin"]
@@ -81,9 +92,6 @@ class HanZi:
         self.start_x = (self.page_width - self.doc_width) / 2
         self.start_y = (self.page_height - self.doc_height) / 2
 
-        self.line_color = [colors.Color(199, 238, 206), colors.Color(199, 238, 206)]
-        self.col_text_colors = ['lightgrey']  # 全部浅灰
-
         print('doc_width', self.doc_width, 'col_count', self.col_count)
         print('doc_height', self.doc_height, 'row_count', self.row_count)
 
@@ -100,10 +108,9 @@ class HanZi:
         self.canv = canvas.Canvas(pdf_path, pagesize=(self.page_width * cm, self.page_height * cm))
 
     def _set_font(self, size):
-        print(self.font_name, self.font_file)
         rl_config.autoGenerateMissingTTFName = True
-        pdfmetrics.registerFont(TTFont(self.font_name, self.font_file))
-        self.canv.setFont(self.font_name, size)
+        pdfmetrics.registerFont(TTFont(self.font_name + '1', self.font_file))
+        self.canv.setFont(self.font_name + '1', size)
 
     def _draw_fang(self, _x, _y):
         # 绘制每列的竖线
@@ -192,6 +199,15 @@ class HanZi:
         y -= line_height / 3
         self.canv.setDash([])
 
+    def _draw_vertical(self, _x, _y):
+        # 绘制每列的竖线
+        y = self.page_height - _y - self.item_height
+        self.canv.setDash([])
+        self.canv.setStrokeColor(self.line_color[0])
+        for col in range(0, self.col_count + 1):
+            x = _x + col * self.item_width
+            self.canv.line(x * cm, y * cm, x * cm, (y + self.item_height) * cm)
+
     def draw_bank(self):
         self.canv.setStrokeColor(self.line_color[0])
         self.canv.setLineWidth(1)
@@ -209,6 +225,8 @@ class HanZi:
                 self._draw_fang(x, y)
             elif self.grid_type == self.GRID_TYPE_HUI:
                 self._draw_hui(x, y)
+            elif self.grid_type >= self.GRID_TYPE_VERTICAL:
+                self._draw_vertical(x, y)
 
     def _next(self):
         self.curr_index = self.curr_index + 1
@@ -224,8 +242,12 @@ class HanZi:
             self.draw_bank()
             self.curr_page = page_index
 
-        row = int(self.curr_index / self.col_count) - self.row_count * self.curr_page
-        col = int(self.curr_index % self.col_count)
+        if self.grid_type >= self.GRID_TYPE_VERTICAL:
+            row = int(self.curr_index % self.row_count)
+            col = self.col_count - (int(self.curr_index / self.row_count) - self.col_count * self.curr_page) - 1
+        else:
+            row = int(self.curr_index / self.col_count) - self.row_count * self.curr_page
+            col = int(self.curr_index % self.col_count)
         return row, col
 
     def draw_text(self, txt, color=None):
@@ -251,10 +273,6 @@ class HanZi:
         self.canv.drawString(x * cm, y * cm, txt)
 
     def draw_mutilate_text(self, txt):
-        txt = txt.strip()
-        txt = txt.replace('\t', '')
-        txt = txt.replace('\r', '')
-        txt = txt.replace('\n\n', '\n')
         for t in txt:
             if t == '\n':
                 while True:
@@ -297,43 +315,24 @@ if __name__ == '__main__':
 羲农开辟，轩昊承传。魃凌涿鹿，熊奋阪泉。
 四凶伏罪，群兽听宣。垂裳拱手，击壤欢颜。
 挽弓射日，采石补天。巢由小隐，稷契大贤。
-
 触峰贻患，治水移权。繇惟北面，舜竟南迁。
-
 洪荒待考，虚诞连篇。聊将俊杰，尽作神仙。
-
 桀纣多情，履发能征。每言失道，必曰倾城。
-
 戮兄叔旦，述父武庚。败皆怙恶，成则彰名。
-
 三王既殁，诸霸迭兴。七雄更勃，百战不宁。
-
 起甘杀妇，羊忍啜羹。枉称顺逆，漫说纵横。
-
 楚户秦俑，燕台赵坑。推诚赴会，转瞬渝盟。
-
 役丁困死，戍卒求生。饱经丧乱，渴望升平。
-
 始皇暴戾，赤帝刚柔。俱为一统，谁得千秋？
-
 遂分郡县，稍褫公侯。豪侠饮恨，渔樵忘忧。
-
 九畿旌旆，万里丝绸。计出帷幄，功归冕旒。
-
 或逢外戚，空逞叛谋。秀堪应谶，莽固招尤。
-
 汉廷何在？洛邑另修。往来阉宦，蹴踏清流。
-
 魏晋受禅，陶虞蒙羞。蜀申炎祚，吴访夷洲。
-
 瑜亮已逝，干戈且终。尘侵塞内，烟锁江东。
-
 六朝斜月，五族飘风。尔登宝殿，朕坐囚笼。
-
 投鞭踊跃，挥麈雍容。锋芒闪烁，血泪混融。
-
 隋代至伟，齐州复同。寒窗苦读，进士荣封。
-
 杨凋李继，周退唐隆。长明乃晦，极盛而穷。
 
 怯谈藩镇，愁看深宫。篡臣交替，僭主相攻。

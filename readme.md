@@ -87,11 +87,13 @@ python3 main.py
 4. 内容
 
    生成的PDF中的文字内容。
-   
+   - 普通
    ![](./readme.res/hanzi-pdf1.png)
-![](./readme.res/hanzi-with-pinyin-pdf1.png)
-
-![](./readme.res/hanzi-pdf2.png)
+   ![](./readme.res/hanzi-pdf2.png)
+   - 看拼音写汉字
+   ![](./readme.res/hanzi-with-pinyin-pdf1.png)
+   - 竖行
+   ![](./readme.res/vertical.png)
 
 # 数字字帖
 
