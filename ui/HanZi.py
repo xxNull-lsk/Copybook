@@ -72,7 +72,7 @@ class UiHanZi(QWidget):
         self.combo_grid_type.addItem('米字格', HanZi.GRID_TYPE_MI)
         self.combo_grid_type.addItem('田字格', HanZi.GRID_TYPE_TIAN)
         self.combo_grid_type.addItem('回宫格', HanZi.GRID_TYPE_HUI)
-        self.combo_grid_type.addItem('竖行', HanZi.GRID_TYPE_VERTICAL)
+        self.combo_grid_type.addItem('竖线格', HanZi.GRID_TYPE_VERTICAL)
         self.combo_grid_type.currentIndexChanged.connect(self.do_preview)
         grid.addWidget(self.combo_grid_type, row, 1)
 

@@ -92,9 +92,6 @@ class HanZi:
         self.start_x = (self.page_width - self.doc_width) / 2
         self.start_y = (self.page_height - self.doc_height) / 2
 
-        print('doc_width', self.doc_width, 'col_count', self.col_count)
-        print('doc_height', self.doc_height, 'row_count', self.row_count)
-
     def __del__(self):
         self.close()
 
