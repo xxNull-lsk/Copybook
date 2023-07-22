@@ -214,7 +214,7 @@ class PinYin {
       var y = pageHeight -
           row * (itemHeight + lineHanzi + lineSpace) -
           itemHeight * fontScan -
-          m!.maxHeight * fontSize / cm;
+          m.maxHeight * fontSize / cm;
 
       // 设置文字颜色
       Color color;
