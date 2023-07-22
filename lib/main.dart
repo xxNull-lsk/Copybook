@@ -29,7 +29,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const PinYinPage("拼音"),
+      home: const NumberPage("数字"),
         routes: {
           "汉字":(context) => const HanZiPage("汉字"),
           "拼音":(context) => const PinYinPage("拼音"),

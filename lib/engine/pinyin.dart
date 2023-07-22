@@ -170,7 +170,7 @@ class PinYin {
     y += itemHeight / 3;
 
     canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
-    canvas.setLineDashPattern(<int>[3, 3], 0);
+    canvas.setLineDashPattern([3, 3], 0);
     canvas.strokePath();
 
     y += itemHeight / 3;
@@ -194,11 +194,6 @@ class PinYin {
     for (int row = 0; row < rowCount; row++) {
       var x = startX;
       var y = startY + row * (itemHeight + lineHanzi + lineSpace);
-      if (row == 0) {
-        canvas.setStrokeColor(PdfColors.amber);
-      } else {
-        canvas.setStrokeColor(PdfColors.red);
-      }
       _drawPinYin(canvas, x, y);
       y += itemHeight;
       if (mShowHanzi) {

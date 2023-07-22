@@ -4,6 +4,7 @@ import 'package:copybook/engine/number.dart';
 import 'package:copybook/mydrawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
 
 class NumberPage extends StatefulWidget {
   const NumberPage(this.title, {super.key});
@@ -38,7 +39,7 @@ class _NumberPageState extends State<NumberPage> {
     '全部浅灰': [Colors.grey.shade400, Colors.grey.shade400],
   };
 
-  Number mNumber = Number();
+  Number mNumber = Number(<String, dynamic>{});
   List<DropdownMenuItem<String>> mFontItems = [];
   Map<String, dynamic> mConfig = {};
   Map<String, dynamic> mFonts = {};
@@ -262,5 +263,37 @@ class _NumberPageState extends State<NumberPage> {
     });
   }
 
-  void flushImage({maxPageCount = 1}) async {}
+  void flushImage({maxPageCount = 1}) async {
+    mNumber = Number(mFonts);
+    mNumber.fontName = mFontName;
+    mNumber.lineColor = mLineColorItems[mLineColor]!;
+    mNumber.textColor = mTextColorsItems[mTextColor]!;
+    mNumber.maxPageCount = maxPageCount;
+    switch (mCopybookType) {
+      case "不描字":
+        await mNumber.drawTextPreLine(mText);
+        break;
+      case "全描字":
+        await mNumber.drawTextPreLine(mText, repeat: 1);
+        break;
+      case "半描字":
+        await mNumber.drawTextPreLine(mText, repeat: 0.5);
+        break;
+      case "隔行":
+        {
+          await mNumber.drawMutilateText(mText, bSpaceLine: true);
+        }
+        break;
+
+      default: //"常规"
+        {
+          await mNumber.drawMutilateText(mText);
+        }
+    }
+    var pdfData = await mNumber.pdf.save();
+    await for (var page in Printing.raster(pdfData, pages: [0])) {
+      mImageData = await page.toPng();
+      setState(() {});
+    }
+  }
 }
