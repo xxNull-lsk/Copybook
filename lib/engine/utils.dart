@@ -55,7 +55,15 @@ class Utils {
         },
       }
     };
-    String data = json.encode(body);
+    String data = json.encode(
+      body,
+      toEncodable: (object) {
+        if (object is DateTime) {
+          return object.toString();
+        }
+        return object;
+      },
+    );
     final response =
         await dio.post('https://blog.mydata.top:8681/api/common/tick_20230701',
             data: data,

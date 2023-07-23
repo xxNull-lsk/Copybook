@@ -7,7 +7,7 @@ import 'pages/pinyin.dart';
 import 'pages/preview.dart';
 
 void main() {
-  Future.delayed(const Duration(seconds: 1), () {
+  Future.delayed(const Duration(seconds: 3), () {
     Utils.doTick();
   });
 
