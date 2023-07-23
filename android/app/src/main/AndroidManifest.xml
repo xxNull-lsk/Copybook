@@ -1,9 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="top.mydata.copybook">
    <application
-        android:label="copybook"
+        android:label="字帖生成器"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/app">
         <activity
             android:name=".MainActivity"
             android:exported="true"

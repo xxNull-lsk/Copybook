@@ -29,11 +29,11 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const HanZiPage("汉字"),
+      home: const HanZiPage("汉字字帖"),
         routes: {
-          "汉字":(context) => const HanZiPage("汉字"),
-          "拼音":(context) => const PinYinPage("拼音"),
-          "数字":(context) => const NumberPage("数字"),
+          "汉字":(context) => const HanZiPage("汉字字帖"),
+          "拼音":(context) => const PinYinPage("拼音字帖"),
+          "数字":(context) => const NumberPage("数字字帖"),
           "preview":(context) {
             Map<String,dynamic>? argv =
                 ModalRoute.of(context)?.settings.arguments as Map<String,dynamic>?;
