@@ -307,7 +307,7 @@ class _HanZiPageState extends State<HanZiPage> {
   }
 
   Container getPreviewImage({double? maxWidthImage}) {
-    return Container(
+    return mImageData.isNotEmpty ? Container(
       width: maxWidthImage,
       margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -335,8 +335,8 @@ class _HanZiPageState extends State<HanZiPage> {
         ],
       ),
       alignment: Alignment.topCenter,
-      child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
-    );
+      child: Image.memory(mImageData),
+    ) : Container();
   }
 
   // 桌面布局
