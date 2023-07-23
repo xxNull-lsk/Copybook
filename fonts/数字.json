@@ -1,22 +1,16 @@
 {
-    "default": "庞中华钢笔字体",
+    "default": "楷体",
     "text": "0123456789012345",
     "base": {
         "font_size": 38,
         "font_scan": 0.8
     },
-    "skip": ["庞中华行书", "田英章楷书"],
     "fonts":
     {
         "楷体": {
             "font_file": "楷体.ttf",
             "font_size": 38,
             "font_scan": 0.85
-        },
-        "华文楷体": {
-            "font_file": "华文楷体.ttf",
-            "font_size": 38,
-            "font_scan": 0.8
         },
         "庞中华钢笔字体": {
             "font_file": "庞中华钢笔字体.ttf",

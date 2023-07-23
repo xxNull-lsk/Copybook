@@ -5,7 +5,6 @@
         "font_size": 38,
         "font_scan": 0.85
     },
-    "skip": [],
     "fonts":
     {
         "楷体": {
@@ -27,11 +26,6 @@
             "line_space": 0.2,
             "side_space": 1.0,
             "line_pinyin": 0.6
-        },
-        "华文楷体": {
-            "font_file": "华文楷体.ttf",
-            "font_size": 38,
-            "font_scan": 0.82
         },
         "庞中华钢笔字体": {
             "font_file": "庞中华钢笔字体.ttf",

@@ -12,90 +12,90 @@ enum GridType {
 }
 
 class HanZi {
-  String fontName = "楷体";
-  double fontSize = 28;
-  double fontScan = 1.0;
-  double pageWidth = 21;
-  double pageHeight = 29.7;
-  int colCount = 0;
-  int rowCount = 0;
+  String mFontName = "楷体";
+  double mFontSize = 28;
+  double mFontScan = 1.0;
+  double mPageWidth = 21;
+  double mPageHeight = 29.7;
+  int mColCount = 0;
+  int mRowCount = 0;
 
-  int maxPageCount = -1;
-  double itemWidth = 1.5;
-  double itemHeight = 1.5;
-  double lineSpace = 0.2;
-  double sideSpace = 1.2;
-  double linePinyin = 0;
-  double startX = 0;
-  double startY = 0;
+  int mMaxPageCount = -1;
+  double mItemWidth = 1.5;
+  double mItemHeight = 1.5;
+  double mLineSpace = 0.2;
+  double mSideSpace = 1.2;
+  double mLinePinyin = 0;
+  double mStartX = 0;
+  double mStartY = 0;
   double cm = 1;
 
-  double docWidth = 0;
-  double docHeight = 0;
+  double mDocWidth = 0;
+  double mDocHeight = 0;
 
-  bool showPinyin = false;
-  GridType gridType = GridType.gridTypeFang;
-  Color lineColor = const Color.fromRGBO(199, 238, 206, 1);
-  List<Color> textColor = [Colors.grey.shade400, Colors.grey.shade400];
+  bool mShowPinyin = false;
+  GridType mGridType = GridType.gridTypeFang;
+  Color mLineColor = const Color.fromRGBO(199, 238, 206, 1);
+  List<Color> mTextColor = [Colors.grey.shade400, Colors.grey.shade400];
 
-  pw.Document pdf = pw.Document();
+  pw.Document mPdf = pw.Document();
   final Map<String, dynamic> fonts;
 
   HanZi(this.fonts);
 
   Future<void> clac() async {
-    pdf = pw.Document();
-    var fontConfig = fonts[fontName];
+    mPdf = pw.Document();
+    var fontConfig = fonts[mFontName];
     var fontData = await rootBundle.load("fonts/手写/${fontConfig["font_file"]}");
-    final font = PdfTtfFont(pdf.document, fontData);
-    pdf.document.fonts.add(font);
+    final font = PdfTtfFont(mPdf.document, fontData);
+    mPdf.document.fonts.add(font);
     cm = PdfPageFormat.cm;
-    sideSpace = 0;
+    mSideSpace = 0;
 
-    Map<String, dynamic> cfg = fonts[fontName];
+    Map<String, dynamic> cfg = fonts[mFontName];
     if (cfg.containsKey("font_size")) {
-      fontSize = cfg["font_size"].toDouble();
+      mFontSize = cfg["font_size"].toDouble();
     }
     if (cfg.containsKey("font_scan")) {
-      fontScan = cfg["font_scan"].toDouble();
+      mFontScan = cfg["font_scan"].toDouble();
     }
 
-    docWidth = pageWidth - sideSpace * 2;
-    docHeight = pageHeight - sideSpace * 2;
+    mDocWidth = mPageWidth - mSideSpace * 2;
+    mDocHeight = mPageHeight - mSideSpace * 2;
 
-    colCount = docWidth ~/ itemWidth;
-    rowCount = 0;
+    mColCount = mDocWidth ~/ mItemWidth;
+    mRowCount = 0;
 
-    if (gridType == GridType.gridTypeVertical) {
-      linePinyin = 0;
-      lineSpace = 0;
-      showPinyin = false;
+    if (mGridType == GridType.gridTypeVertical) {
+      mLinePinyin = 0;
+      mLineSpace = 0;
+      mShowPinyin = false;
     }
 
-    if (showPinyin) {
+    if (mShowPinyin) {
       if (cfg.containsKey("line_pinyin")) {
-        linePinyin = cfg["line_pinyin"].toDouble();
+        mLinePinyin = cfg["line_pinyin"].toDouble();
       } else {
-        linePinyin = 0.8;
+        mLinePinyin = 0.8;
       }
     }
-    rowCount = (docHeight + lineSpace) ~/ (itemHeight + linePinyin + lineSpace);
+    mRowCount = (mDocHeight + mLineSpace) ~/ (mItemHeight + mLinePinyin + mLineSpace);
 
-    docWidth = colCount * itemWidth;
-    docHeight = rowCount * (itemHeight + linePinyin + lineSpace) - lineSpace;
+    mDocWidth = mColCount * mItemWidth;
+    mDocHeight = mRowCount * (mItemHeight + mLinePinyin + mLineSpace) - mLineSpace;
 
-    startX = (pageWidth - docWidth) / 2;
-    startY = (pageHeight - docHeight) / 2;
+    mStartX = (mPageWidth - mDocWidth) / 2;
+    mStartY = (mPageHeight - mDocHeight) / 2;
   }
 
   void _drawFang(PdfGraphics canvas, double x_, double y_) {
     var y = y_;
     // 绘制每列的竖线
-    for (int col = 0; col < colCount; col++) {
-      var x = x_ + col * itemWidth;
-      canvas.drawLine(x * cm, y * cm, x * cm, (y + itemHeight) * cm);
+    for (int col = 0; col < mColCount; col++) {
+      var x = x_ + col * mItemWidth;
+      canvas.drawLine(x * cm, y * cm, x * cm, (y + mItemHeight) * cm);
     }
-    canvas.drawRect(x_ * cm, y * cm, docWidth * cm, itemHeight * cm);
+    canvas.drawRect(x_ * cm, y * cm, mDocWidth * cm, mItemHeight * cm);
     canvas.setLineDashPattern([]);
     canvas.strokePath();
   }
@@ -103,14 +103,14 @@ class HanZi {
   void _drawTian(PdfGraphics canvas, double x_, double y_) {
     // 绘制每格的中心水平虚线
     double x = x_;
-    double y = y_ + itemHeight / 2;
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
+    double y = y_ + mItemHeight / 2;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
 
     // 绘制每列中间的竖线
-    y = y_ + itemHeight;
-    for (int index = 0; index < colCount; index++) {
-      x = x_ + (index + 0.5) * itemWidth;
-      canvas.drawLine(x * cm, (y - itemHeight) * cm, x * cm, y * cm);
+    y = y_ + mItemHeight;
+    for (int index = 0; index < mColCount; index++) {
+      x = x_ + (index + 0.5) * mItemWidth;
+      canvas.drawLine(x * cm, (y - mItemHeight) * cm, x * cm, y * cm);
     }
     canvas.setLineDashPattern([2, 2]);
     canvas.strokePath();
@@ -121,12 +121,12 @@ class HanZi {
   void _drawMi(PdfGraphics canvas, double x_, double y_) {
     // 绘制每格的斜线
     double y = y_;
-    for (int index = 0; index < colCount; index++) {
-      double x = x_ + index * itemWidth;
+    for (int index = 0; index < mColCount; index++) {
+      double x = x_ + index * mItemWidth;
       canvas.drawLine(
-          x * cm, y * cm, (x + itemWidth) * cm, (y + itemHeight) * cm);
+          x * cm, y * cm, (x + mItemWidth) * cm, (y + mItemHeight) * cm);
       canvas.drawLine(
-          (x + itemWidth) * cm, y * cm, x * cm, (y + itemHeight) * cm);
+          (x + mItemWidth) * cm, y * cm, x * cm, (y + mItemHeight) * cm);
     }
     canvas.setLineDashPattern([2, 2]);
     canvas.strokePath();
@@ -135,29 +135,29 @@ class HanZi {
 
   void _drawPinYin(PdfGraphics canvas, double x_, double y_) {
     var x = x_;
-    var y = pageHeight - y_;
+    var y = mPageHeight - y_;
 
-    y += linePinyin / 3;
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
-    y += linePinyin / 3;
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
-    y += linePinyin / 3;
+    y += mLinePinyin / 3;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
+    y += mLinePinyin / 3;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
+    y += mLinePinyin / 3;
     canvas.setLineDashPattern(<int>[3, 3], 0);
     canvas.strokePath();
 
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
-    y += linePinyin / 3;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
+    y += mLinePinyin / 3;
     canvas.setLineDashPattern([]);
     canvas.strokePath();
   }
 
   void _drawHui(PdfGraphics canvas, double x_, double y_) {
     // 绘制内框
-    var height = itemHeight * 0.7; // 该比例不一定正确。没有找到相关资料。该比例是量出来的。
+    var height = mItemHeight * 0.7; // 该比例不一定正确。没有找到相关资料。该比例是量出来的。
     var width = height * 0.618;
-    var y = y_ + itemHeight - (itemHeight - height) / 2;
-    for (var col = 0; col < colCount; col++) {
-      var x = x_ + col * itemWidth + (itemWidth - width) / 2;
+    var y = y_ + mItemHeight - (mItemHeight - height) / 2;
+    for (var col = 0; col < mColCount; col++) {
+      var x = x_ + col * mItemWidth + (mItemWidth - width) / 2;
       canvas.drawRect(x * cm, y * cm, width * cm, -height * cm);
     }
     _drawFang(canvas, x_, y_);
@@ -165,29 +165,29 @@ class HanZi {
 
   void drawVertical(PdfGraphics canvas, double x_, double y_) {
     // 绘制每列的竖线
-    double y = y_ + itemHeight / 4;
-    for (var col = 0; col < colCount + 1; col++) {
-      double x = x_ + col * itemWidth;
-      canvas.drawLine(x * cm, y * cm, x * cm, (y + itemHeight) * cm);
+    double y = y_ + mItemHeight / 4;
+    for (var col = 0; col < mColCount + 1; col++) {
+      double x = x_ + col * mItemWidth;
+      canvas.drawLine(x * cm, y * cm, x * cm, (y + mItemHeight) * cm);
     }
     canvas.setLineDashPattern([]);
     canvas.strokePath();
   }
 
   void drawBank(PdfGraphics canvas) {
-    for (int row = 0; row < rowCount; row++) {
-      var x = startX;
-      var y = startY + row * (itemHeight + linePinyin + lineSpace);
+    for (int row = 0; row < mRowCount; row++) {
+      var x = mStartX;
+      var y = mStartY + row * (mItemHeight + mLinePinyin + mLineSpace);
       canvas
-        ..setStrokeColor(PdfColor(lineColor.red / 255.0,
-            lineColor.green / 255.0, lineColor.blue / 255.0, lineColor.opacity))
+        ..setStrokeColor(PdfColor(mLineColor.red / 255.0,
+            mLineColor.green / 255.0, mLineColor.blue / 255.0, mLineColor.opacity))
         ..setLineWidth(0.5)
         ..setFillColor(PdfColors.black);
-      if (showPinyin) {
+      if (mShowPinyin) {
         _drawPinYin(canvas, x, y);
-        y += linePinyin;
+        y += mLinePinyin;
       }
-      switch (gridType) {
+      switch (mGridType) {
         case GridType.gridTypeFang:
           _drawFang(canvas, x, y);
           break;
@@ -210,12 +210,12 @@ class HanZi {
 
   List<int> _pos(int index) {
     int row = 0, col = 0;
-    if (gridType == GridType.gridTypeVertical) {
-      row = (index % rowCount);
-      col = colCount - index ~/ rowCount - 1;
+    if (mGridType == GridType.gridTypeVertical) {
+      row = (index % mRowCount);
+      col = mColCount - index ~/ mRowCount - 1;
     } else {
-      row = index ~/ colCount;
-      col = (index % colCount);
+      row = index ~/ mColCount;
+      col = (index % mColCount);
     }
     index++;
     return [row, col];
@@ -228,31 +228,31 @@ class HanZi {
       var row = pos[0];
       var col = pos[1];
       var m = canvas.defaultFont?.stringMetrics(str[index]);
-      var x = startX +
-          col * itemWidth +
-          (itemWidth - m!.maxWidth * fontSize / cm) / 2;
-      var y = pageHeight - (row + 1) * (itemHeight + linePinyin + lineSpace);
+      var x = mStartX +
+          col * mItemWidth +
+          (mItemWidth - m!.maxWidth * mFontSize / cm) / 2;
+      var y = mPageHeight - (row + 1) * (mItemHeight + mLinePinyin + mLineSpace);
 
       // 设置文字颜色
       Color color;
-      if (col < textColor.length) {
-        color = textColor[col];
+      if (col < mTextColor.length) {
+        color = mTextColor[col];
       } else {
-        color = textColor[textColor.length - 1];
+        color = mTextColor[mTextColor.length - 1];
       }
       canvas.setFillColor(
           PdfColor(color.red / 255.0, color.green / 255.0, color.blue / 255.0));
 
       canvas.drawString(
-          canvas.defaultFont!, fontSize, str[index], x * cm, y * cm);
+          canvas.defaultFont!, mFontSize, str[index], x * cm, y * cm);
     }
   }
 
   Future<void> drawTextPreLine(String str, {double repeat = 0}) async {
     await clac();
-    int count = colCount;
-    if (gridType == GridType.gridTypeVertical) {
-      count = rowCount;
+    int count = mColCount;
+    if (mGridType == GridType.gridTypeVertical) {
+      count = mRowCount;
     }
     // 填充，每行数据
     String lineText = "";
@@ -272,9 +272,9 @@ class HanZi {
   Future<void> drawMutilateText(String str, {bool bSpaceLine = false}) async {
     await clac();
     if (bSpaceLine) {
-      int count = colCount;
-      if (gridType == GridType.gridTypeVertical) {
-        count = rowCount;
+      int count = mColCount;
+      if (mGridType == GridType.gridTypeVertical) {
+        count = mRowCount;
       }
 
       String lineText = "";
@@ -287,7 +287,7 @@ class HanZi {
         if (end > str.length) {
           end = str.length;
         }
-        if (gridType == GridType.gridTypeVertical) {
+        if (mGridType == GridType.gridTypeVertical) {
           lineText += spaceLine;
           lineText += str.substring(i, end);
         } else {
@@ -304,14 +304,14 @@ class HanZi {
     int begin = 0, end = 0;
     int pageIndex = 0;
     while (
-        begin < str.length && (pageIndex < maxPageCount || maxPageCount <= 0)) {
+        begin < str.length && (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
       pageIndex++;
-      end = begin + colCount * rowCount;
+      end = begin + mColCount * mRowCount;
       if (end > str.length) {
         end = str.length;
       }
       String strPage = str.substring(begin, end);
-      pdf.addPage(pw.Page(
+      mPdf.addPage(pw.Page(
         build: (pw.Context context) {
           return pw.ConstrainedBox(
               constraints: const pw.BoxConstraints.expand(),

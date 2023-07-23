@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:copybook/engine/hanzi.dart';
 import 'package:flutter/material.dart';
@@ -53,9 +54,11 @@ class _HanZiPageState extends State<HanZiPage> {
   String mCopybookType = '常规';
   bool mShowPinyin = false;
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
+  final TextEditingController mTextEditingController = TextEditingController();
   @override
   void initState() {
     super.initState();
+    mTextEditingController.text = mText;
     rootBundle.load("res/pdf.jpg").then((value) {
       mImageData = value.buffer.asUint8List();
       setState(() {});
@@ -67,6 +70,7 @@ class _HanZiPageState extends State<HanZiPage> {
       mText = mConfig["text"];
       mFontName = mConfig["default"];
       mFontItems.clear();
+      mTextEditingController.text = mText;
       for (var item in mFonts.keys) {
         mFontItems.add(DropdownMenuItem(
           value: item,
@@ -81,7 +85,7 @@ class _HanZiPageState extends State<HanZiPage> {
     flushImage(maxPageCount: -1);
     Navigator.pushNamed(context, "preview", arguments: {
       "title": widget.title,
-      "pdf": mHanZi.pdf,
+      "pdf": mHanZi.mPdf,
     });
   }
 
@@ -243,12 +247,12 @@ class _HanZiPageState extends State<HanZiPage> {
 
   void flushImage({maxPageCount = 1}) async {
     mHanZi = HanZi(mFonts);
-    mHanZi.fontName = mFontName;
-    mHanZi.gridType = mGridType;
-    mHanZi.lineColor = mLineColorItems[mLineColor]!;
-    mHanZi.textColor = mTextColorsItems[mTextColor]!;
-    mHanZi.showPinyin = mShowPinyin;
-    mHanZi.maxPageCount = maxPageCount;
+    mHanZi.mFontName = mFontName;
+    mHanZi.mGridType = mGridType;
+    mHanZi.mLineColor = mLineColorItems[mLineColor]!;
+    mHanZi.mTextColor = mTextColorsItems[mTextColor]!;
+    mHanZi.mShowPinyin = mShowPinyin;
+    mHanZi.mMaxPageCount = maxPageCount;
     switch (mCopybookType) {
       case "不描字":
         await mHanZi.drawTextPreLine(mText);
@@ -270,7 +274,7 @@ class _HanZiPageState extends State<HanZiPage> {
           await mHanZi.drawMutilateText(mText);
         }
     }
-    var pdfData = await mHanZi.pdf.save();
+    var pdfData = await mHanZi.mPdf.save();
     await for (var page in Printing.raster(pdfData, pages: [0])) {
       mImageData = await page.toPng();
       setState(() {});
@@ -282,7 +286,16 @@ class _HanZiPageState extends State<HanZiPage> {
       padding: const EdgeInsets.all(12),
       child: TextField(
         maxLines: null,
-        controller: TextEditingController(text: mText),
+        controller: mTextEditingController,
+        onChanged: (value) {
+          mText = value;
+          mTextEditingController.value = TextEditingValue(
+            text: value,
+            selection: TextSelection.fromPosition(TextPosition(
+                affinity: TextAffinity.downstream, offset: value.length)),
+          );
+          flushImage();
+        },
         decoration: const InputDecoration(
           labelText: "字帖内容",
           border: OutlineInputBorder(
@@ -293,8 +306,41 @@ class _HanZiPageState extends State<HanZiPage> {
     );
   }
 
-  // 横屏布局
-  Widget getLandscapeLayout() {
+  Container getPreviewImage({double? maxWidthImage}) {
+    return Container(
+      width: maxWidthImage,
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(
+              5.0,
+              5.0,
+            ), //Offset
+            blurRadius: 10.0,
+            spreadRadius: 2.0,
+          ), //BoxShadow
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(0.0, 0.0),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+          ), //BoxShadow
+        ],
+      ),
+      alignment: Alignment.topCenter,
+      child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
+    );
+  }
+
+  // 桌面布局
+  Widget getDesktopLayout() {
     double maxWidth = MediaQuery.of(context).size.width - 700;
     double maxWidthImage = 500;
     if (maxWidth < 400) {
@@ -316,12 +362,45 @@ class _HanZiPageState extends State<HanZiPage> {
             getTextField(),
           ]),
         ),
-        Container(
-          width: maxWidthImage,
-          padding: const EdgeInsets.all(12),
-          alignment: Alignment.topCenter,
-          child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
-        )
+        getPreviewImage(maxWidthImage:maxWidthImage)
+      ],
+    );
+  }
+
+  // 横屏布局
+  Widget getLandscapeLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 1,
+          child: Column(children: [
+            Row(children: buildLineColor()),
+            Row(children: buildGridType()),
+            Row(children: buildTextColor()),
+            Row(children: buildTextFont()),
+            Row(children: buildCopybookType()),
+            Row(children: buildPinyin()),
+            getTextField(),
+          ]),
+        ),
+        Expanded(flex: 1, child: getPreviewImage())
+      ],
+    );
+  }
+
+  // 竖屏布局
+  Widget getPortraitLayout() {
+    return Column(
+      children: [
+        getPreviewImage(),
+        Row(children: buildLineColor()),
+        Row(children: buildGridType()),
+        Row(children: buildTextColor()),
+        Row(children: buildTextFont()),
+        Row(children: buildCopybookType()),
+        Row(children: buildPinyin()),
+        getTextField(),
       ],
     );
   }
@@ -342,12 +421,24 @@ class _HanZiPageState extends State<HanZiPage> {
         ],
       ),
       drawer: const MyDrawer(),
-      body: SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: getLandscapeLayout(),
-          )),
+      body: OrientationBuilder(
+          builder: (BuildContext context, Orientation orientation) {
+        Widget layout;
+        if (Platform.isAndroid || Platform.isIOS || Platform.isFuchsia) {
+          layout = orientation == Orientation.landscape
+              ? getLandscapeLayout()
+              : getPortraitLayout();
+        } else {
+          layout = getDesktopLayout();
+        }
+        return SingleChildScrollView(
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: layout,
+            ));
+      }),
     );
   }
 }

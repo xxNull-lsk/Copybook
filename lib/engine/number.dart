@@ -4,69 +4,69 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class Number {
-  Color lineColor = const Color.fromRGBO(199, 238, 206, 1);
-  List<Color> textColor = [Colors.grey.shade400, Colors.grey.shade400];
-  int maxPageCount = -1;
+  Color mLineColor = const Color.fromRGBO(199, 238, 206, 1);
+  List<Color> mTextColor = [Colors.grey.shade400, Colors.grey.shade400];
+  int mMaxPageCount = -1;
 
-  int colCount = 0;
-  int rowCount = 0;
+  int mColCount = 0;
+  int mRowCount = 0;
 
-  double itemWidth = 1.5;
-  double itemHeight = 1.5;
-  double lineSpace = 0.8;
-  double sideSpace = 1.2;
-  double startX = 0;
-  double startY = 0;
+  double mItemWidth = 1.5;
+  double mItemHeight = 1.5;
+  double mLineSpace = 0.8;
+  double mSideSpace = 1.2;
+  double mStartX = 0;
+  double mStartY = 0;
   double cm = 1;
 
-  String fontName = "楷体";
-  double fontSize = 28;
-  double fontScan = 0;
+  String mFontName = "楷体";
+  double mFontSize = 28;
+  double mFontScan = 0;
 
-  double pageWidth = 21;
-  double pageHeight = 29.7;
-  double docWidth = 0;
-  double docHeight = 0;
+  double mPageWidth = 21;
+  double mPageHeight = 29.7;
+  double mDocWidth = 0;
+  double mDocHeight = 0;
 
-  pw.Document pdf = pw.Document();
-  final Map<String, dynamic> fonts;
+  pw.Document mPdf = pw.Document();
+  final Map<String, dynamic> mFonts;
 
-  Number(this.fonts);
+  Number(this.mFonts);
 
   Future<void> clac() async {
-    pdf = pw.Document();
-    var fontConfig = fonts[fontName];
+    mPdf = pw.Document();
+    var fontConfig = mFonts[mFontName];
     var fontData = await rootBundle.load("fonts/手写/${fontConfig["font_file"]}");
-    final font = PdfTtfFont(pdf.document, fontData);
-    pdf.document.fonts.add(font);
+    final font = PdfTtfFont(mPdf.document, fontData);
+    mPdf.document.fonts.add(font);
     cm = PdfPageFormat.cm;
-    sideSpace = 0;
+    mSideSpace = 0;
 
-    Map<String, dynamic> cfg = fonts[fontName];
+    Map<String, dynamic> cfg = mFonts[mFontName];
     if (cfg.containsKey("font_size")) {
-      fontSize = cfg["font_size"].toDouble();
+      mFontSize = cfg["font_size"].toDouble();
     }
     if (cfg.containsKey("font_scan")) {
-      fontScan = cfg["font_scan"].toDouble();
+      mFontScan = cfg["font_scan"].toDouble();
     }
 
-    docWidth = pageWidth - sideSpace * 2;
-    docHeight = pageHeight - sideSpace * 2;
+    mDocWidth = mPageWidth - mSideSpace * 2;
+    mDocHeight = mPageHeight - mSideSpace * 2;
 
-    colCount = docWidth ~/ itemWidth;
-    rowCount = (docHeight + lineSpace) ~/ (itemHeight + lineSpace);
+    mColCount = mDocWidth ~/ mItemWidth;
+    mRowCount = (mDocHeight + mLineSpace) ~/ (mItemHeight + mLineSpace);
 
-    docWidth = colCount * itemWidth;
-    docHeight = rowCount * (itemHeight + lineSpace) - lineSpace;
+    mDocWidth = mColCount * mItemWidth;
+    mDocHeight = mRowCount * (mItemHeight + mLineSpace) - mLineSpace;
 
-    startX = (pageWidth - docWidth) / 2;
-    startY = (pageHeight - docHeight) / 2;
+    mStartX = (mPageWidth - mDocWidth) / 2;
+    mStartY = (mPageHeight - mDocHeight) / 2;
   }
 
   Future<void> drawMutilateText(String str, {bool bSpaceLine = false}) async {
     await clac();
     if (bSpaceLine) {
-      int count = colCount;
+      int count = mColCount;
       String lineText = "";
       String spaceLine = "";
       for (var c = 0; c < count; c++) {
@@ -87,7 +87,7 @@ class Number {
 
   Future<void> drawTextPreLine(String str, {double repeat = 0}) async {
     await clac();
-    int count = colCount;
+    int count = mColCount;
     // 填充，每行数据
     String lineText = "";
     for (var i = 0; i < str.length; i++) {
@@ -107,14 +107,14 @@ class Number {
     int begin = 0, end = 0;
     int pageIndex = 0;
     while (
-        begin < str.length && (pageIndex < maxPageCount || maxPageCount <= 0)) {
+        begin < str.length && (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
       pageIndex++;
-      end = begin + colCount * rowCount;
+      end = begin + mColCount * mRowCount;
       if (end > str.length) {
         end = str.length;
       }
       String strPage = str.substring(begin, end);
-      pdf.addPage(pw.Page(
+      mPdf.addPage(pw.Page(
         build: (pw.Context context) {
           return pw.ConstrainedBox(
               constraints: const pw.BoxConstraints.expand(),
@@ -133,22 +133,22 @@ class Number {
 
   List<int> _pos(int index) {
     int row = 0, col = 0;
-    row = index ~/ colCount;
-    col = (index % colCount);
+    row = index ~/ mColCount;
+    col = (index % mColCount);
     index++;
     return [row, col];
   }
 
   void _drawNumber(PdfGraphics canvas, double x_, double y_) {
     // 绘制每列的竖线
-    for (int col = 0; col < colCount; col++) {
-      var y = pageHeight - y_ - itemHeight;
-      var x = x_ + col * itemWidth;
-      canvas.drawRect(x * cm, y * cm, itemWidth / 2 * cm, itemHeight * cm);
+    for (int col = 0; col < mColCount; col++) {
+      var y = mPageHeight - y_ - mItemHeight;
+      var x = x_ + col * mItemWidth;
+      canvas.drawRect(x * cm, y * cm, mItemWidth / 2 * cm, mItemHeight * cm);
       canvas.setLineDashPattern([]);
       canvas.strokePath();
-      y += itemHeight / 2;
-      canvas.drawLine(x * cm, y * cm, (x + itemWidth / 2) * cm, y * cm);
+      y += mItemHeight / 2;
+      canvas.drawLine(x * cm, y * cm, (x + mItemWidth / 2) * cm, y * cm);
       canvas.setLineDashPattern([2, 2], 0);
       canvas.strokePath();
     }
@@ -157,13 +157,13 @@ class Number {
 
   void drawBank(PdfGraphics canvas) {
     canvas
-      ..setStrokeColor(PdfColor(lineColor.red / 255.0, lineColor.green / 255.0,
-          lineColor.blue / 255.0, lineColor.opacity))
+      ..setStrokeColor(PdfColor(mLineColor.red / 255.0, mLineColor.green / 255.0,
+          mLineColor.blue / 255.0, mLineColor.opacity))
       ..setLineWidth(0.5)
       ..setFillColor(PdfColors.black);
-    for (int row = 0; row < rowCount; row++) {
-      var x = startX;
-      var y = startY + row * (itemHeight + lineSpace);
+    for (int row = 0; row < mRowCount; row++) {
+      var x = mStartX;
+      var y = mStartY + row * (mItemHeight + mLineSpace);
       _drawNumber(canvas, x, y);
     }
   }
@@ -175,25 +175,25 @@ class Number {
       var row = pos[0];
       var col = pos[1];
       var m = canvas.defaultFont?.stringMetrics(str[index]);
-      var x = startX +
-          col * itemWidth +
-          (itemWidth / 2 - m!.advanceWidth * fontSize / cm) / 2;
-      var y = pageHeight -
-          row * (itemHeight + lineSpace) -
-          itemHeight;
+      var x = mStartX +
+          col * mItemWidth +
+          (mItemWidth / 2 - m!.advanceWidth * mFontSize / cm) / 2;
+      var y = mPageHeight -
+          row * (mItemHeight + mLineSpace) -
+          mItemHeight;
 
       // 设置文字颜色
       Color color;
-      if (col < textColor.length) {
-        color = textColor[col];
+      if (col < mTextColor.length) {
+        color = mTextColor[col];
       } else {
-        color = textColor[textColor.length - 1];
+        color = mTextColor[mTextColor.length - 1];
       }
       canvas.setFillColor(
           PdfColor(color.red / 255.0, color.green / 255.0, color.blue / 255.0));
 
       canvas.drawString(
-          canvas.defaultFont!, fontSize, str[index], x * cm, y * cm);
+          canvas.defaultFont!, mFontSize, str[index], x * cm, y * cm);
     }
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:copybook/engine/pinyin.dart';
 import 'package:copybook/mydrawer.dart';
 import 'package:flutter/material.dart';
@@ -49,10 +51,11 @@ class _PinYinPageState extends State<PinYinPage> {
       "ū ú ǔ ù    ǖ ǘ ǚ ǜ";
 
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
+  final TextEditingController mTextEditingController = TextEditingController();
   @override
   void initState() {
     super.initState();
-    _textEditingController.text = mText;
+    mTextEditingController.text = mText;
     rootBundle.load("res/pdf.jpg").then((value) {
       mImageData = value.buffer.asUint8List();
       flushImage();
@@ -75,12 +78,24 @@ class _PinYinPageState extends State<PinYinPage> {
         ],
       ),
       drawer: const MyDrawer(),
-      body: SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: getLandscapeLayout(),
-          )),
+      body: OrientationBuilder(
+          builder: (BuildContext context, Orientation orientation) {
+        Widget layout;
+        if (Platform.isAndroid || Platform.isIOS || Platform.isFuchsia) {
+          layout = orientation == Orientation.landscape
+              ? getLandscapeLayout()
+              : getPortraitLayout();
+        } else {
+          layout = getDesktopLayout();
+        }
+        return SingleChildScrollView(
+            padding:
+                const EdgeInsets.only(left: 20, right: 20, top: 10, bottom: 20),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: layout,
+            ));
+      }),
     );
   }
 
@@ -206,19 +221,20 @@ class _PinYinPageState extends State<PinYinPage> {
     );
   }
 
-  final TextEditingController _textEditingController = TextEditingController();
   Widget getTextField() {
     return Container(
       padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
       child: TextField(
         maxLines: null,
-        controller: _textEditingController,
+        keyboardType: TextInputType.text,
+        controller: mTextEditingController,
         onChanged: (value) {
           mText = value;
-          _textEditingController.value = TextEditingValue(
-              text: value,
-              selection: TextSelection.fromPosition(TextPosition(
-                  affinity: TextAffinity.downstream, offset: value.length)));
+          mTextEditingController.value = TextEditingValue(
+            text: value,
+            selection: TextSelection.fromPosition(TextPosition(
+                affinity: TextAffinity.downstream, offset: value.length)),
+          );
           flushImage();
         },
         decoration: const InputDecoration(
@@ -231,7 +247,75 @@ class _PinYinPageState extends State<PinYinPage> {
     );
   }
 
+  Container getPreviewImage({double? maxWidthImage}) {
+    return Container(
+      width: maxWidthImage,
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(
+              5.0,
+              5.0,
+            ), //Offset
+            blurRadius: 10.0,
+            spreadRadius: 2.0,
+          ), //BoxShadow
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(0.0, 0.0),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+          ), //BoxShadow
+        ],
+      ),
+      alignment: Alignment.topCenter,
+      child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
+    );
+  }
+
+  // 横屏布局
   Widget getLandscapeLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 1,
+          child: Column(children: [
+            Row(children: buildLineColor()),
+            Row(children: buildTextColor()),
+            Row(children: buildCopybookType()),
+            Row(children: buildHanzi()),
+            getTextField(),
+          ]),
+        ),
+        Expanded(flex: 1, child: getPreviewImage())
+      ],
+    );
+  }
+
+  // 竖屏布局
+  Widget getPortraitLayout() {
+    return Column(
+      children: [
+        getPreviewImage(),
+        Row(children: buildLineColor()),
+        Row(children: buildTextColor()),
+        Row(children: buildCopybookType()),
+        Row(children: buildHanzi()),
+        getTextField(),
+      ],
+    );
+  }
+
+  // 桌面布局
+  Widget getDesktopLayout() {
     double maxWidth = MediaQuery.of(context).size.width - 700;
     double maxWidthImage = 500;
     if (maxWidth < 400) {
@@ -252,12 +336,7 @@ class _PinYinPageState extends State<PinYinPage> {
             getTextField(),
           ]),
         ),
-        Container(
-          width: maxWidthImage,
-          padding: const EdgeInsets.all(12),
-          alignment: Alignment.topCenter,
-          child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
-        )
+        getPreviewImage(maxWidthImage: maxWidthImage)
       ],
     );
   }
@@ -266,15 +345,15 @@ class _PinYinPageState extends State<PinYinPage> {
     flushImage(maxPageCount: -1);
     Navigator.pushNamed(context, "preview", arguments: {
       "title": widget.title,
-      "pdf": mPinYin.pdf,
+      "pdf": mPinYin.mPdf,
     });
   }
 
   void flushImage({maxPageCount = 1}) async {
-    mPinYin.lineColor = mLineColorItems[mLineColor]!;
-    mPinYin.textColor = mTextColorsItems[mTextColor]!;
+    mPinYin.mLineColor = mLineColorItems[mLineColor]!;
+    mPinYin.mTextColor = mTextColorsItems[mTextColor]!;
     mPinYin.mShowHanzi = mShowHanzi;
-    mPinYin.maxPageCount = maxPageCount;
+    mPinYin.mMaxPageCount = maxPageCount;
     final re = RegExp(r'[ \n]');
     List<String> txt = mText.split(re);
     switch (mCopybookType) {
@@ -298,7 +377,7 @@ class _PinYinPageState extends State<PinYinPage> {
           await mPinYin.drawMutilateText(txt);
         }
     }
-    var pdfData = await mPinYin.pdf.save();
+    var pdfData = await mPinYin.mPdf.save();
     await for (var page in Printing.raster(pdfData, pages: [0])) {
       mImageData = await page.toPng();
       setState(() {});

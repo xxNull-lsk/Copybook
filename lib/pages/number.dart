@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:copybook/engine/number.dart';
 import 'package:copybook/mydrawer.dart';
@@ -55,6 +56,7 @@ class _NumberPageState extends State<NumberPage> {
       "ū ú ǔ ù    ǖ ǘ ǚ ǜ";
 
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
+  final TextEditingController mTextEditingController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -69,6 +71,7 @@ class _NumberPageState extends State<NumberPage> {
       mText = mConfig["text"];
       mFontName = mConfig["default"];
       mFontItems.clear();
+      mTextEditingController.text = mText;
       for (var item in mFonts.keys) {
         mFontItems.add(DropdownMenuItem(
           value: item,
@@ -95,12 +98,23 @@ class _NumberPageState extends State<NumberPage> {
         ],
       ),
       drawer: const MyDrawer(),
-      body: SingleChildScrollView(
-          padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width,
-            child: getLandscapeLayout(),
-          )),
+      body: OrientationBuilder(
+          builder: (BuildContext context, Orientation orientation) {
+        Widget layout;
+        if (Platform.isAndroid || Platform.isIOS || Platform.isFuchsia) {
+          layout = orientation == Orientation.landscape
+              ? getLandscapeLayout()
+              : getPortraitLayout();
+        } else {
+          layout = getDesktopLayout();
+        }
+        return SingleChildScrollView(
+            padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              child: layout,
+            ));
+      }),
     );
   }
 
@@ -197,7 +211,17 @@ class _NumberPageState extends State<NumberPage> {
       padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
       child: TextField(
         maxLines: null,
-        controller: TextEditingController(text: mText),
+        keyboardType: TextInputType.number,
+        controller: mTextEditingController,
+        onChanged: (value) {
+          mText = value;
+          mTextEditingController.value = TextEditingValue(
+            text: value,
+            selection: TextSelection.fromPosition(TextPosition(
+                affinity: TextAffinity.downstream, offset: value.length)),
+          );
+          flushImage();
+        },
         decoration: const InputDecoration(
           labelText: "字帖内容",
           border: OutlineInputBorder(
@@ -225,7 +249,41 @@ class _NumberPageState extends State<NumberPage> {
     ];
   }
 
-  Widget getLandscapeLayout() {
+  Container getPreviewImage({double? maxWidthImage}) {
+    return Container(
+      width: maxWidthImage,
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(
+              5.0,
+              5.0,
+            ), //Offset
+            blurRadius: 10.0,
+            spreadRadius: 2.0,
+          ), //BoxShadow
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(0.0, 0.0),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+          ), //BoxShadow
+        ],
+      ),
+      alignment: Alignment.topCenter,
+      child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
+    );
+  }
+
+  // 桌面布局
+  Widget getDesktopLayout() {
     double maxWidth = MediaQuery.of(context).size.width - 700;
     double maxWidthImage = 500;
     if (maxWidth < 400) {
@@ -245,30 +303,57 @@ class _NumberPageState extends State<NumberPage> {
             getTextField(),
           ]),
         ),
-        Container(
-          width: maxWidthImage,
-          padding: const EdgeInsets.all(12),
-          alignment: Alignment.topCenter,
-          child: mImageData.isNotEmpty ? Image.memory(mImageData) : Container(),
-        )
+        getPreviewImage(maxWidthImage: maxWidthImage)
       ],
     );
+  }
+
+  // 横屏布局
+  Widget getLandscapeLayout() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 1,
+          child: Column(children: [
+            Row(children: buildLineColor()),
+            Row(children: buildTextColor()),
+            Row(children: buildCopybookType()),
+            Row(children: buildTextFont()),
+            getTextField(),
+          ]),
+        ),
+        Expanded(flex: 1, child: getPreviewImage())
+      ],
+    );
+  }
+
+  // 竖屏布局
+  Widget getPortraitLayout() {
+    return Column(children: [
+      getPreviewImage(),
+      Row(children: buildLineColor()),
+      Row(children: buildTextColor()),
+      Row(children: buildCopybookType()),
+      Row(children: buildTextFont()),
+      getTextField(),
+    ]);
   }
 
   void doSave() {
     flushImage(maxPageCount: -1);
     Navigator.pushNamed(context, "preview", arguments: {
       "title": widget.title,
-      "pdf": mNumber.pdf,
+      "pdf": mNumber.mPdf,
     });
   }
 
   void flushImage({maxPageCount = 1}) async {
     mNumber = Number(mFonts);
-    mNumber.fontName = mFontName;
-    mNumber.lineColor = mLineColorItems[mLineColor]!;
-    mNumber.textColor = mTextColorsItems[mTextColor]!;
-    mNumber.maxPageCount = maxPageCount;
+    mNumber.mFontName = mFontName;
+    mNumber.mLineColor = mLineColorItems[mLineColor]!;
+    mNumber.mTextColor = mTextColorsItems[mTextColor]!;
+    mNumber.mMaxPageCount = maxPageCount;
     switch (mCopybookType) {
       case "不描字":
         await mNumber.drawTextPreLine(mText);
@@ -290,7 +375,7 @@ class _NumberPageState extends State<NumberPage> {
           await mNumber.drawMutilateText(mText);
         }
     }
-    var pdfData = await mNumber.pdf.save();
+    var pdfData = await mNumber.mPdf.save();
     await for (var page in Printing.raster(pdfData, pages: [0])) {
       mImageData = await page.toPng();
       setState(() {});

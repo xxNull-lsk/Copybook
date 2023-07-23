@@ -4,74 +4,74 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 class PinYin {
-  Color lineColor = const Color.fromRGBO(199, 238, 206, 1);
-  List<Color> textColor = [Colors.grey.shade400, Colors.grey.shade400];
+  Color mLineColor = const Color.fromRGBO(199, 238, 206, 1);
+  List<Color> mTextColor = [Colors.grey.shade400, Colors.grey.shade400];
   bool mShowHanzi = false;
-  int maxPageCount = -1;
+  int mMaxPageCount = -1;
 
-  int colCount = 0;
-  int rowCount = 0;
+  int mColCount = 0;
+  int mRowCount = 0;
 
-  double itemWidth = 1.5;
-  double itemHeight = 1.5;
-  double lineSpace = 0.8;
-  double sideSpace = 1.2;
-  double lineHanzi = 0;
-  double startX = 0;
-  double startY = 0;
+  double mItemWidth = 1.5;
+  double mItemHeight = 1.5;
+  double mLineSpace = 0.8;
+  double mSideSpace = 1.2;
+  double mLineHanzi = 0;
+  double mStartX = 0;
+  double mStartY = 0;
   double cm = 1;
 
-  double fontSize = 28;
-  double fontScan = 0.86;
+  double mFontSize = 28;
+  double mFontScan = 0.86;
 
-  double pageWidth = 21;
-  double pageHeight = 29.7;
-  double docWidth = 0;
-  double docHeight = 0;
+  double mPageWidth = 21;
+  double mPageHeight = 29.7;
+  double mDocWidth = 0;
+  double mDocHeight = 0;
 
-  pw.Document pdf = pw.Document();
+  pw.Document mPdf = pw.Document();
 
   Future<void> clac() async {
-    pdf = pw.Document();
+    mPdf = pw.Document();
     var fontData = await rootBundle.load("fonts/拼音/汉语拼音.ttf");
-    final font = PdfTtfFont(pdf.document, fontData);
-    pdf.document.fonts.add(font);
+    final font = PdfTtfFont(mPdf.document, fontData);
+    mPdf.document.fonts.add(font);
     cm = PdfPageFormat.cm;
-    sideSpace = 0;
+    mSideSpace = 0;
 
-    docWidth = pageWidth - sideSpace * 2;
-    docHeight = pageHeight - sideSpace * 2;
+    mDocWidth = mPageWidth - mSideSpace * 2;
+    mDocHeight = mPageHeight - mSideSpace * 2;
 
     if (mShowHanzi) {
-      lineHanzi = 2.0;
-      itemWidth = 2.0;
-      fontSize = 18;
-      itemHeight = 0.9;
-      fontScan = 1;
-      lineSpace = 0.2;
+      mLineHanzi = 2.0;
+      mItemWidth = 2.0;
+      mFontSize = 18;
+      mItemHeight = 0.9;
+      mFontScan = 1;
+      mLineSpace = 0.2;
     } else {
-      lineHanzi = 0;
-      fontSize = 28;
-      itemHeight = 1.5;
-      itemWidth = 2.5;
-      fontScan = 0.12;
-      lineSpace = 0.8;
+      mLineHanzi = 0;
+      mFontSize = 28;
+      mItemHeight = 1.5;
+      mItemWidth = 2.5;
+      mFontScan = 0.12;
+      mLineSpace = 0.8;
     }
-    colCount = docWidth ~/ itemWidth;
-    rowCount = (docHeight + lineSpace) ~/ (itemHeight + lineHanzi + lineSpace);
+    mColCount = mDocWidth ~/ mItemWidth;
+    mRowCount = (mDocHeight + mLineSpace) ~/ (mItemHeight + mLineHanzi + mLineSpace);
 
-    docWidth = colCount * itemWidth;
-    docHeight = rowCount * (itemHeight + lineHanzi + lineSpace) - lineSpace;
+    mDocWidth = mColCount * mItemWidth;
+    mDocHeight = mRowCount * (mItemHeight + mLineHanzi + mLineSpace) - mLineSpace;
 
-    startX = (pageWidth - docWidth) / 2;
-    startY = (pageHeight - docHeight) / 2;
+    mStartX = (mPageWidth - mDocWidth) / 2;
+    mStartY = (mPageHeight - mDocHeight) / 2;
   }
 
   Future<void> drawMutilateText(List<String> str,
       {bool bSpaceLine = false}) async {
     await clac();
     if (bSpaceLine) {
-      int count = colCount;
+      int count = mColCount;
 
       List<String> lineText = [];
       List<String> spaceLine = [];
@@ -93,7 +93,7 @@ class PinYin {
 
   Future<void> drawTextPreLine(List<String> txt, {double repeat = 0}) async {
     await clac();
-    int count = colCount;
+    int count = mColCount;
     // 填充，每行数据
     List<String> lineText = [];
     for (var i = 0; i < txt.length; i++) {
@@ -113,14 +113,14 @@ class PinYin {
     int begin = 0, end = 0;
     int pageIndex = 0;
     while (
-        begin < str.length && (pageIndex < maxPageCount || maxPageCount <= 0)) {
+        begin < str.length && (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
       pageIndex++;
-      end = begin + colCount * rowCount;
+      end = begin + mColCount * mRowCount;
       if (end > str.length) {
         end = str.length;
       }
       List<String> strPage = str.sublist(begin, end);
-      pdf.addPage(pw.Page(
+      mPdf.addPage(pw.Page(
         build: (pw.Context context) {
           return pw.ConstrainedBox(
               constraints: const pw.BoxConstraints.expand(),
@@ -139,47 +139,47 @@ class PinYin {
 
   List<int> _pos(int index) {
     int row = 0, col = 0;
-    row = index ~/ colCount;
-    col = (index % colCount);
+    row = index ~/ mColCount;
+    col = (index % mColCount);
     index++;
     return [row, col];
   }
 
   void _drawFang(PdfGraphics canvas, double x_, double y_) {
-    var y = pageHeight - y_ - lineHanzi;
+    var y = mPageHeight - y_ - mLineHanzi;
     // 绘制每列的竖线
-    for (int col = 0; col < colCount; col++) {
-      var x = x_ + col * lineHanzi;
-      canvas.drawLine(x * cm, y * cm, x * cm, (y + lineHanzi) * cm);
+    for (int col = 0; col < mColCount; col++) {
+      var x = x_ + col * mLineHanzi;
+      canvas.drawLine(x * cm, y * cm, x * cm, (y + mLineHanzi) * cm);
     }
-    canvas.drawRect(x_ * cm, y * cm, docWidth * cm, lineHanzi * cm);
+    canvas.drawRect(x_ * cm, y * cm, mDocWidth * cm, mLineHanzi * cm);
     canvas.setLineDashPattern([]);
     canvas.strokePath();
   }
 
   void _drawPinYin(PdfGraphics canvas, double x_, double y_) {
     var x = x_;
-    var y = pageHeight - y_ - itemHeight;
+    var y = mPageHeight - y_ - mItemHeight;
 
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
     canvas.setLineDashPattern([]);
     canvas.strokePath();
 
-    y += itemHeight / 3;
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
-    y += itemHeight / 3;
+    y += mItemHeight / 3;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
+    y += mItemHeight / 3;
 
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
     canvas.setLineDashPattern([3, 3], 0);
     canvas.strokePath();
 
-    y += itemHeight / 3;
-    canvas.drawLine(x * cm, y * cm, (docWidth + x) * cm, y * cm);
+    y += mItemHeight / 3;
+    canvas.drawLine(x * cm, y * cm, (mDocWidth + x) * cm, y * cm);
 
-    y = pageHeight - y_ - itemHeight;
-    for (int col = 0; col < colCount + 1; col++) {
-      double x = x_ + itemWidth * col;
-      canvas.drawLine(x * cm, y * cm, x * cm, (y + itemHeight) * cm);
+    y = mPageHeight - y_ - mItemHeight;
+    for (int col = 0; col < mColCount + 1; col++) {
+      double x = x_ + mItemWidth * col;
+      canvas.drawLine(x * cm, y * cm, x * cm, (y + mItemHeight) * cm);
     }
     canvas.setLineDashPattern([]);
     canvas.strokePath();
@@ -187,15 +187,15 @@ class PinYin {
 
   void drawBank(PdfGraphics canvas) {
     canvas
-      ..setStrokeColor(PdfColor(lineColor.red / 255.0, lineColor.green / 255.0,
-          lineColor.blue / 255.0, lineColor.opacity))
+      ..setStrokeColor(PdfColor(mLineColor.red / 255.0, mLineColor.green / 255.0,
+          mLineColor.blue / 255.0, mLineColor.opacity))
       ..setLineWidth(0.5)
       ..setFillColor(PdfColors.black);
-    for (int row = 0; row < rowCount; row++) {
-      var x = startX;
-      var y = startY + row * (itemHeight + lineHanzi + lineSpace);
+    for (int row = 0; row < mRowCount; row++) {
+      var x = mStartX;
+      var y = mStartY + row * (mItemHeight + mLineHanzi + mLineSpace);
       _drawPinYin(canvas, x, y);
-      y += itemHeight;
+      y += mItemHeight;
       if (mShowHanzi) {
         _drawFang(canvas, x, y);
       }
@@ -210,24 +210,24 @@ class PinYin {
       var col = pos[1];
       var m = canvas.defaultFont?.stringMetrics(str[index]);
       var x =
-          startX + col * itemWidth + (itemWidth - m!.width * fontSize / cm) / 2;
-      var y = pageHeight -
-          row * (itemHeight + lineHanzi + lineSpace) -
-          itemHeight * fontScan -
-          m.maxHeight * fontSize / cm;
+          mStartX + col * mItemWidth + (mItemWidth - m!.width * mFontSize / cm) / 2;
+      var y = mPageHeight -
+          row * (mItemHeight + mLineHanzi + mLineSpace) -
+          mItemHeight * mFontScan -
+          m.maxHeight * mFontSize / cm;
 
       // 设置文字颜色
       Color color;
-      if (col < textColor.length) {
-        color = textColor[col];
+      if (col < mTextColor.length) {
+        color = mTextColor[col];
       } else {
-        color = textColor[textColor.length - 1];
+        color = mTextColor[mTextColor.length - 1];
       }
       canvas.setFillColor(
           PdfColor(color.red / 255.0, color.green / 255.0, color.blue / 255.0));
 
       canvas.drawString(
-          canvas.defaultFont!, fontSize, str[index], x * cm, y * cm);
+          canvas.defaultFont!, mFontSize, str[index], x * cm, y * cm);
     }
   }
 }
