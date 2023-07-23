@@ -1,0 +1,11 @@
+[Desktop Entry]
+Categories=Education
+Type=Application
+Icon=/opt/copybook/data/flutter_assets/res/app.png
+StartupNotify=false
+Terminal=false
+Name=CopyBook
+GenericName=CopyBook
+GenericName[zh_CN]=字帖生成器
+Name[zh_CN]=字帖生成器
+Exec=/opt/copybook/copybook
