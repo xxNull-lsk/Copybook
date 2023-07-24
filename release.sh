@@ -21,10 +21,10 @@ git push --tags
 bash ./build.sh
 
 
-scp dist/copybook_${version}.apk allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
-scp ${DIR}/dist/copybook_${version}_linux_x64.tar.gz allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
+scp dist/copybook_${version}.apk allan@10.0.2.9:/mnt/zhanmei/nas/allan/鎴戠殑杞欢/copybook/
+scp ${DIR}/dist/copybook_${version}_linux_x64.tar.gz allan@10.0.2.9:/mnt/zhanmei/nas/allan/鎴戠殑杞欢/copybook/
 
-scp dist/copybook_${version}_linux_x64.deb allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
+scp dist/copybook_${version}_linux_x64.deb allan@10.0.2.9:/mnt/zhanmei/nas/allan/鎴戠殑杞欢/copybook/
 echo "Upload succeed."
 
 exit 0
