@@ -12,11 +12,12 @@ if "%minor_version%"=="" set minor_version=0
 if "%fixed_version%"=="" set fixed_version=0
 
 set version=%major_version%.%minor_version%.%fixed_version%
-set yyyy=%date:~3,4%
-set mm=%date:~8,2%
-set dd=%date:~11,2%
+set yyyy=%date:~0,4%
+set mm=%date:~5,2%
+set dd=%date:~8,2%
 set build_number=%yyyy%%mm%%dd%
-call flutter build windows --release -v --build-number %build_number% --build-name=%version%
+echo flutter build windows --release --build-number %build_number% --build-name=%version%
+call flutter build windows --release --build-number %build_number% --build-name=%version%
 
 mkdir dist\copybook
 xcopy /e /Y .\build\windows\runner\Release .\dist\copybook\
