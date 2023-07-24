@@ -42,6 +42,7 @@ dependencies:
   platform_device_id_v3: ^1.0.0
   device_info_plus: ^9.0.2
   package_info_plus: ^4.0.2
+  url_launcher: ^6.1.11
 
 dev_dependencies:
   flutter_test:
