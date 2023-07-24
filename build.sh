@@ -25,8 +25,8 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-cp build/app/outputs/apk/release/app-release.apk dist/copybook_${version}_$curr.apk
-scp dist/copybook_${version}_$curr.apk allan@10.0.2.9:/mnt/zhanmei/nas/allan/Tools/Android/myself/
+cp build/app/outputs/apk/release/app-release.apk dist/copybook_${version}.apk
+scp dist/copybook_${version}.apk allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
 echo "Upload android application succeed."
 
 
@@ -41,7 +41,7 @@ cp ./LICENSE ./deb/opt/copybook
 cd ./deb/opt/
 tar -czf copybook_${version}_linux_x64.tar.gz copybook
 mv copybook_${version}_linux_x64.tar.gz ${DIR}/dist/
-scp ${DIR}/dist/copybook_${version}_linux_x64.tar.gz allan@10.0.2.9:/mnt/zhanmei/nas/allan/Tools/Android/myself/
+scp ${DIR}/dist/copybook_${version}_linux_x64.tar.gz allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
 
 cd ${DIR}
 sed -i "s/^Version:.*/Version:${version}/g" ./deb/DEBIAN/control
@@ -49,7 +49,9 @@ dpkg -b deb dist/copybook_${version}_linux_x64.deb
 rm -rf deb/opt/copybook/*
 sed -i "s/^Version:.*/Version:0.0.0/g" deb/DEBIAN/control
 
-scp dist/copybook_${version}_linux_x64.deb allan@10.0.2.9:/mnt/zhanmei/nas/allan/Tools/Android/myself/
+scp dist/copybook_${version}_linux_x64.deb allan@10.0.2.9:/mnt/zhanmei/nas/allan/我的软件/copybook/
 echo "Upload linux application succeed."
 
+next_fixed_version=$((fixed_version+1))
+echo $next_fixed_version > .fixed_version
 exit 0
