@@ -22,10 +22,11 @@ os=`uname`
 if [ "$os" == "Darwin" ]; then
     bash ./build_macos.sh
     ret=$?
-    exit $ret
 elif [ "$os" == "Linux" ]; then
     bash ./build_linux.sh
     ret=$?
+fi
+if [ $ret -ne 0 ]; then
     exit $ret
 fi
 
