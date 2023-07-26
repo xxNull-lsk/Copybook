@@ -24,3 +24,11 @@
     ```cmake
     DOWNLOAD_EXTRACT_TIMESTAMP true
     ```
+
+# MacOS下遇到的问题
+- 无法访问网络
+`macos/Runner/DebugProfile.entitlements`和 `macos/Runner/Release.entitlements`中新增：
+```xml
+	<key>com.apple.security.network.client</key>
+	<true/>
+```
