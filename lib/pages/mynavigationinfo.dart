@@ -52,7 +52,7 @@ class MyNavigationInfo {
           IconButton(
             onPressed: () {
               final Uri url = Uri.parse('http://cloud.mydata.top:8080');
-              launchUrl(url);
+              launchUrl(url, mode: LaunchMode.externalApplication);
             },
             icon: const Text("关于我"),
           ),
