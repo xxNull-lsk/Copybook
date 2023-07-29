@@ -1,4 +1,5 @@
 import 'package:copybook/engine/utils.dart';
+import 'package:copybook/pages/main.dart';
 import 'package:flutter/material.dart';
 
 import 'pages/hanzi.dart';
@@ -34,7 +35,7 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.blue,
         ),
-        home: const HanZiPage("汉字字帖"),
+        home: const MainPage(),
         routes: {
           "汉字": (context) => const HanZiPage("汉字字帖"),
           "拼音": (context) => const PinYinPage("拼音字帖"),
