@@ -77,7 +77,7 @@ class _PinYinPageState extends State<PinYinPage> {
           )
         ],
       ),
-      drawer: const MyDrawer(),
+      //drawer: const MyDrawer(),
       body: OrientationBuilder(
           builder: (BuildContext context, Orientation orientation) {
         Widget layout;
@@ -309,6 +309,7 @@ class _PinYinPageState extends State<PinYinPage> {
         Row(children: buildTextColor()),
         Row(children: buildCopybookType()),
         Row(children: buildHanzi()),
+        getExampleTextField(),
         getTextField(),
       ],
     );

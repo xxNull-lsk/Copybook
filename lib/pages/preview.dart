@@ -29,22 +29,9 @@ class _PreviewPageState extends State<PreviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Platform.isLinux || Platform.isWindows || Platform.isMacOS
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () => Navigator.pop(context),
-                  )
-                : const SizedBox(width: 0),
-            Platform.isLinux || Platform.isWindows || Platform.isMacOS
-                ? const SizedBox(width: 18)
-                : const SizedBox(width: 0),
-            Text(widget.title),
-          ],
-        ),
+        title: Text(widget.title),
       ),
-      drawer: const MyDrawer(),
+      //drawer: const MyDrawer(),
       body: PdfPreview(
         build: (format) => widget.pdf.save(),
         canChangePageFormat: false,

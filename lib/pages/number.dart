@@ -97,7 +97,7 @@ class _NumberPageState extends State<NumberPage> {
           )
         ],
       ),
-      drawer: const MyDrawer(),
+      //drawer: const MyDrawer(),
       body: OrientationBuilder(
           builder: (BuildContext context, Orientation orientation) {
         Widget layout;

@@ -422,7 +422,7 @@ class _HanZiPageState extends State<HanZiPage> {
           )
         ],
       ),
-      drawer: const MyDrawer(),
+      //drawer: const MyDrawer(),
       body: OrientationBuilder(
           builder: (BuildContext context, Orientation orientation) {
         Widget layout;
