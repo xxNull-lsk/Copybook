@@ -1,6 +1,11 @@
 #!/bin/bash
 
-echo "build for MacOS..."
+if [ "${version}" == "" ]; then
+    echo "Error: version is empty"
+    exit 1
+fi
+
+echo "build for MacOS ${version}..."
 flutter build macos --release --build-number ${curr} --build-name=${version}
 if [ $? -ne 0 ]; then
     echo "Error: Do build for MacOS failed!"
