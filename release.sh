@@ -16,6 +16,8 @@ fi
 fixed_version=`cat .fixed_version`
 
 version=${major_version}.${minor_version}.${fixed_version}
+git add .
+git commit -m "Release:$version"
 git tag v$version
 git push --tags
 bash ./build.sh
