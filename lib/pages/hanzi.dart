@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:copybook/backend/stroke.dart';
 import 'package:copybook/engine/hanzi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
-
-import '../mydrawer.dart';
 
 class HanZiPage extends StatefulWidget {
   const HanZiPage(this.title, {super.key});
@@ -51,7 +50,7 @@ class _HanZiPageState extends State<HanZiPage> {
   String mLineColor = '粉色';
   GridType mGridType = GridType.gridTypeFang;
   String mTextColor = "全部粉色";
-  String mCopybookType = '常规';
+  String mCopybookType = '笔划';
   bool mShowPinyin = false;
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
   final TextEditingController mTextEditingController = TextEditingController();
@@ -68,6 +67,7 @@ class _HanZiPageState extends State<HanZiPage> {
       mConfig = jsonDecode(value);
       mFonts = mConfig["fonts"];
       mText = mConfig["text"];
+      mText = "你好返回四舍五入到最接近整数的数字的";
       mFontName = mConfig["default"];
       mFontItems.clear();
       mTextEditingController.text = mText;
@@ -81,11 +81,14 @@ class _HanZiPageState extends State<HanZiPage> {
     });
   }
 
-  void doSave() {
-    flushImage(maxPageCount: -1);
-    Navigator.pushNamed(context, "preview", arguments: {
-      "title": widget.title,
-      "pdf": mHanZi.mPdf,
+  void doSave() async {
+    await doDraw(maxPageCount: -1);
+
+    Future.delayed(const Duration(microseconds: 1), () {
+      Navigator.pushNamed(context, "preview", arguments: {
+        "title": widget.title,
+        "pdf": mHanZi.mPdf,
+      });
     });
   }
 
@@ -111,9 +114,7 @@ class _HanZiPageState extends State<HanZiPage> {
         items: getLineColors(),
         value: mLineColor,
         onChanged: (String? value) {
-          setState(() {
-            mLineColor = value!;
-          });
+          mLineColor = value!;
           flushImage();
         },
       ),
@@ -146,9 +147,7 @@ class _HanZiPageState extends State<HanZiPage> {
         items: getGridTypes(),
         value: mGridType,
         onChanged: (GridType? value) {
-          setState(() {
-            mGridType = value!;
-          });
+          mGridType = value!;
           flushImage();
         },
       ),
@@ -174,9 +173,7 @@ class _HanZiPageState extends State<HanZiPage> {
         items: getTextColors(),
         value: mTextColor,
         onChanged: (dynamic value) {
-          setState(() {
-            mTextColor = value!;
-          });
+          mTextColor = value!;
           flushImage();
         },
       ),
@@ -191,9 +188,7 @@ class _HanZiPageState extends State<HanZiPage> {
         items: mFontItems,
         value: mFontName,
         onChanged: (String? value) {
-          setState(() {
-            mFontName = value!;
-          });
+          mFontName = value!;
           flushImage();
         },
       ),
@@ -201,7 +196,7 @@ class _HanZiPageState extends State<HanZiPage> {
   }
 
   List<DropdownMenuItem<String>> getCopybookTypes() {
-    List<String> items = ['常规', '不描字', '半描字', '全描字', '隔行'];
+    List<String> items = ['常规', '不描字', '半描字', '全描字', '隔行', '笔划'];
     List<DropdownMenuItem<String>> dropItems = [];
     for (var item in items) {
       dropItems.add(DropdownMenuItem(
@@ -220,9 +215,7 @@ class _HanZiPageState extends State<HanZiPage> {
         items: getCopybookTypes(),
         value: mCopybookType,
         onChanged: (dynamic value) {
-          setState(() {
-            mCopybookType = value!;
-          });
+          mCopybookType = value!;
           flushImage();
         },
       ),
@@ -236,16 +229,15 @@ class _HanZiPageState extends State<HanZiPage> {
         Switch(
             value: mShowPinyin,
             onChanged: (bool? value) {
-              setState(() {
-                mShowPinyin = value!;
-              });
+              mShowPinyin = value!;
               flushImage();
             })
       ]),
     ];
   }
 
-  void flushImage({maxPageCount = 1}) async {
+  Map<String, dynamic>? mStrokes;
+  Future<void> doDraw({maxPageCount = 1}) async {
     mHanZi = HanZi(mFonts);
     mHanZi.mFontName = mFontName;
     mHanZi.mGridType = mGridType;
@@ -253,6 +245,7 @@ class _HanZiPageState extends State<HanZiPage> {
     mHanZi.mTextColor = mTextColorsItems[mTextColor]!;
     mHanZi.mShowPinyin = mShowPinyin;
     mHanZi.mMaxPageCount = maxPageCount;
+    await mHanZi.clac();
     switch (mCopybookType) {
       case "不描字":
         await mHanZi.drawTextPreLine(mText);
@@ -268,17 +261,51 @@ class _HanZiPageState extends State<HanZiPage> {
           await mHanZi.drawMutilateText(mText, bSpaceLine: true);
         }
         break;
+      case "笔划":
+        {
+          if (mStrokes == null) {
+            int count = mHanZi.mRowCount;
+            if (count > mText.length) {
+              count = mText.length;
+            }
+            Backend.getStroke(mText.substring(0, count)).then((rep) {
+              if (rep.statusCode != 200 || rep.data["code"] != 0) {
+                return;
+              }
+              mStrokes = rep.data["data"];
+              if (mStrokes!.keys.isEmpty) {
+                return;
+              }
+              flushImage(maxPageCount: maxPageCount);
+              return;
+            });
+          } else {
+            mHanZi.mStrokes = mStrokes;
+            await mHanZi.drawMutilateText(mText,
+                bSpaceLine: true, bStroke: true);
+          }
+        }
+        break;
 
       default: //"常规"
         {
           await mHanZi.drawMutilateText(mText);
         }
     }
-    var pdfData = await mHanZi.mPdf.save();
-    await for (var page in Printing.raster(pdfData, pages: [0])) {
-      mImageData = await page.toPng();
-      setState(() {});
-    }
+  }
+
+  Future<void> flushImage({maxPageCount = 1}) async {
+    doDraw(maxPageCount: maxPageCount).then((value) {
+      mHanZi.mPdf.save().then((pdfData) {
+        Printing.raster(pdfData, pages: [0]).every((page) {
+          page.toPng().then((value) {
+            mImageData = value;
+            setState(() {});
+          });
+          return true;
+        });
+      });
+    });
   }
 
   Widget getTextField() {
@@ -294,6 +321,7 @@ class _HanZiPageState extends State<HanZiPage> {
             selection: TextSelection.fromPosition(TextPosition(
                 affinity: TextAffinity.downstream, offset: value.length)),
           );
+          mStrokes = null;
           flushImage();
         },
         decoration: const InputDecoration(

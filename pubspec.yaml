@@ -43,6 +43,10 @@ dependencies:
   device_info_plus: ^9.0.2
   package_info_plus: ^4.0.2
   url_launcher: ^6.1.11
+  sqflite: ^2.2.7
+  encrypt: ^5.0.1
+  crypto: ^3.0.3
+  pointycastle: ^3.7.3
 
 dev_dependencies:
   flutter_test:

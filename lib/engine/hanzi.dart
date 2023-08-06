@@ -1,7 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui';
+
+import 'package:copybook/backend/stroke.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:image/image.dart' as im;
+import 'package:sqflite/sqflite.dart';
 
 enum GridType {
   gridTypeMi,
@@ -24,11 +31,11 @@ class HanZi {
   double mItemWidth = 1.5;
   double mItemHeight = 1.5;
   double mLineSpace = 0.2;
-  double mSideSpace = 1.2;
+  double mSideSpace = 0;
   double mLinePinyin = 0;
   double mStartX = 0;
   double mStartY = 0;
-  double cm = 1;
+  double cm = PdfPageFormat.cm;
 
   double mDocWidth = 0;
   double mDocHeight = 0;
@@ -44,12 +51,13 @@ class HanZi {
   HanZi(this.fonts);
 
   Future<void> clac() async {
+    //mPageWidth = PdfPageFormat.a4.width;
+    //mPageHeight = PdfPageFormat.a4.height;
     mPdf = pw.Document();
     var fontConfig = fonts[mFontName];
     var fontData = await rootBundle.load("fonts/手写/${fontConfig["font_file"]}");
     final font = PdfTtfFont(mPdf.document, fontData);
     mPdf.document.fonts.add(font);
-    cm = PdfPageFormat.cm;
     mSideSpace = 0;
 
     Map<String, dynamic> cfg = fonts[mFontName];
@@ -79,10 +87,12 @@ class HanZi {
         mLinePinyin = 0.8;
       }
     }
-    mRowCount = (mDocHeight + mLineSpace) ~/ (mItemHeight + mLinePinyin + mLineSpace);
+    mRowCount =
+        (mDocHeight + mLineSpace) ~/ (mItemHeight + mLinePinyin + mLineSpace);
 
     mDocWidth = mColCount * mItemWidth;
-    mDocHeight = mRowCount * (mItemHeight + mLinePinyin + mLineSpace) - mLineSpace;
+    mDocHeight =
+        mRowCount * (mItemHeight + mLinePinyin + mLineSpace) - mLineSpace;
 
     mStartX = (mPageWidth - mDocWidth) / 2;
     mStartY = (mPageHeight - mDocHeight) / 2;
@@ -179,8 +189,11 @@ class HanZi {
       var x = mStartX;
       var y = mStartY + row * (mItemHeight + mLinePinyin + mLineSpace);
       canvas
-        ..setStrokeColor(PdfColor(mLineColor.red / 255.0,
-            mLineColor.green / 255.0, mLineColor.blue / 255.0, mLineColor.opacity))
+        ..setStrokeColor(PdfColor(
+            mLineColor.red / 255.0,
+            mLineColor.green / 255.0,
+            mLineColor.blue / 255.0,
+            mLineColor.opacity))
         ..setLineWidth(0.5)
         ..setFillColor(PdfColors.black);
       if (mShowPinyin) {
@@ -208,30 +221,125 @@ class HanZi {
     }
   }
 
-  List<int> _pos(int index) {
+  int mCurrIndex = 0;
+  List<int> _pos(int indexInPage) {
     int row = 0, col = 0;
     if (mGridType == GridType.gridTypeVertical) {
-      row = (index % mRowCount);
-      col = mColCount - index ~/ mRowCount - 1;
+      row = (indexInPage % mRowCount);
+      col = mColCount - indexInPage ~/ mRowCount - 1;
     } else {
-      row = index ~/ mColCount;
-      col = (index % mColCount);
+      row = indexInPage ~/ mColCount;
+      col = (indexInPage % mColCount);
     }
-    index++;
     return [row, col];
   }
 
-  void onDrawMutilateText(String str, PdfGraphics canvas, PdfPoint size) {
+  List<int> _next() {
+    var pos = _pos(mCurrIndex);
+    mCurrIndex++;
+    return pos;
+  }
+
+  Map<String, dynamic>? mStrokes;
+
+  Future<Picture> strokeToImage(List<dynamic> stroke, int step) async {
+    var h = 900;
+    final recorder = PictureRecorder();
+    Canvas canvas = Canvas(recorder);
+    var paint = Paint();
+
+    paint.color = Colors.black; //mTextColor[1];
+    paint.style = PaintingStyle.fill;
+    for (var strokeItem in stroke) {
+      var path = Path();
+      var items = strokeItem.split(" ");
+      for (var i = 0; i < items.length; i++) {
+        switch (items[i]) {
+          case "M":
+            path.moveTo(
+                double.parse(items[i + 1]), h - double.parse(items[i + 2]));
+            i += 2;
+            break;
+          case "L":
+            path.lineTo(
+                double.parse(items[i + 1]), h - double.parse(items[i + 2]));
+            i += 2;
+            break;
+          case "Q":
+            path.quadraticBezierTo(
+                double.parse(items[i + 1]),
+                h - double.parse(items[i + 2]),
+                double.parse(items[i + 3]),
+                h - double.parse(items[i + 4]));
+            i += 4;
+            break;
+          case "Z":
+            canvas.drawPath(path, paint);
+            break;
+          default:
+        }
+      }
+      step--;
+      if (step <= 0) {
+        break;
+      }
+    }
+
+    return recorder.endRecording();
+  }
+
+  Future<void> onDrawStroke(List<dynamic> stroke, PdfGraphics pdfCanvas,
+      PdfPoint size, int indexInPage) async {
+    if (mStrokes == null) {
+      return;
+    }
+
+    for (int indexInStroke = 0;
+        indexInStroke < stroke.length;
+        indexInStroke++) {
+      var picture = await strokeToImage(stroke, indexInStroke + 1);
+      var image = picture.toImageSync(1000, 1000);
+      var imageData = await image.toByteData();
+      if (imageData == null) {
+        continue;
+      }
+
+      var img = PdfImage.fromImage(mPdf.document,
+          image: im.Image.fromBytes(
+              width: image.width,
+              height: image.height,
+              bytes: imageData.buffer,
+              order: im.ChannelOrder.rgba));
+
+      var pos = _pos(indexInPage + indexInStroke);
+      var row = pos[0];
+      var col = pos[1] - 1;
+      var x = mStartX + (col + 0) * mItemWidth - 0.3;
+      var y =
+          mStartY + (row + 0) * (mItemHeight + mLinePinyin + mLineSpace) - 0.7;
+      pdfCanvas.drawImage(
+          img,
+          x * cm + PdfPageFormat.standard.marginLeft,
+          (mPageHeight - y) * cm - PdfPageFormat.standard.marginTop,
+          mFontSize * 0.8,
+          mFontSize * 0.8);
+    }
+  }
+
+  Future<void> onDrawMutilateText(
+      String str, PdfGraphics canvas, PdfPoint size, bool bStroke) async {
     drawBank(canvas);
     for (int index = 0; index < str.length; index++) {
-      var pos = _pos(index);
+      var pos = _next();
       var row = pos[0];
       var col = pos[1];
-      var m = canvas.defaultFont?.stringMetrics(str[index]);
+      final String c = str[index];
+      var m = canvas.defaultFont?.stringMetrics(c);
       var x = mStartX +
           col * mItemWidth +
           (mItemWidth - m!.maxWidth * mFontSize / cm) / 2;
-      var y = mPageHeight - (row + 1) * (mItemHeight + mLinePinyin + mLineSpace);
+      var y =
+          mPageHeight - (row + 1) * (mItemHeight + mLinePinyin + mLineSpace);
 
       // 设置文字颜色
       Color color;
@@ -243,13 +351,23 @@ class HanZi {
       canvas.setFillColor(
           PdfColor(color.red / 255.0, color.green / 255.0, color.blue / 255.0));
 
-      canvas.drawString(
-          canvas.defaultFont!, mFontSize, str[index], x * cm, y * cm);
+      canvas.drawString(canvas.defaultFont!, mFontSize, c, x * cm, y * cm);
+      canvas.saveContext();
+      if (bStroke) {
+        var dataStroke = mStrokes?[c.substring(0, 1)];
+        if (dataStroke == null) {
+          continue;
+        }
+        List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
+        onDrawStroke(stroke, canvas, size, mCurrIndex);
+        mCurrIndex += stroke.length;
+        // 补齐笔画的空格，以达到行对齐的目的
+        //mCurrIndex = (mCurrIndex / mColCount).round() * mColCount;
+      }
     }
   }
 
   Future<void> drawTextPreLine(String str, {double repeat = 0}) async {
-    await clac();
     int count = mColCount;
     if (mGridType == GridType.gridTypeVertical) {
       count = mRowCount;
@@ -266,12 +384,16 @@ class HanZi {
         }
       }
     }
-    doDrawText(lineText);
+    await doDrawText(lineText);
   }
 
-  Future<void> drawMutilateText(String str, {bool bSpaceLine = false}) async {
-    await clac();
-    if (bSpaceLine) {
+  Future<void> drawMutilateText(
+    String str, {
+    bool bSpaceLine = false,
+    bool bStroke = false,
+  }) async {
+    if (bStroke) {
+    } else if (bSpaceLine) {
       int count = mColCount;
       if (mGridType == GridType.gridTypeVertical) {
         count = mRowCount;
@@ -297,20 +419,22 @@ class HanZi {
       }
       str = lineText;
     }
-    doDrawText(str);
+    await doDrawText(str, bStroke: bStroke);
   }
 
-  void doDrawText(String str) {
+  Future<void> doDrawText(String str, {bool bStroke = false}) async {
     int begin = 0, end = 0;
     int pageIndex = 0;
-    while (
-        begin < str.length && (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
+
+    while (begin < str.length &&
+        (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
       pageIndex++;
       end = begin + mColCount * mRowCount;
       if (end > str.length) {
         end = str.length;
       }
       String strPage = str.substring(begin, end);
+
       mPdf.addPage(pw.Page(
         build: (pw.Context context) {
           return pw.ConstrainedBox(
@@ -319,8 +443,10 @@ class HanZi {
                 child: pw.CustomPaint(
                     size: PdfPoint(context.page.pageFormat.width,
                         context.page.pageFormat.height),
-                    painter: (canvas, size) =>
-                        onDrawMutilateText(strPage, canvas, size)),
+                    painter: (canvas, size) {
+                      mCurrIndex = 0;
+                      onDrawMutilateText(strPage, canvas, size, bStroke);
+                    }),
               ));
         },
       ));

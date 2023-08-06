@@ -1,8 +1,4 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-
-import '../mydrawer.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
@@ -33,7 +29,9 @@ class _PreviewPageState extends State<PreviewPage> {
       ),
       //drawer: const MyDrawer(),
       body: PdfPreview(
-        build: (format) => widget.pdf.save(),
+        build: (format){
+          return widget.pdf.save();
+        },
         canChangePageFormat: false,
         canChangeOrientation: false,
         canDebug: false,

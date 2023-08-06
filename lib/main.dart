@@ -1,11 +1,11 @@
-import 'package:copybook/engine/utils.dart';
-import 'package:copybook/pages/main.dart';
 import 'package:flutter/material.dart';
 
-import 'pages/hanzi.dart';
-import 'pages/number.dart';
-import 'pages/pinyin.dart';
-import 'pages/preview.dart';
+import 'package:copybook/engine/utils.dart';
+import 'package:copybook/pages/main.dart';
+import 'package:copybook/pages/hanzi.dart';
+import 'package:copybook/pages/number.dart';
+import 'package:copybook/pages/pinyin.dart';
+import 'package:copybook/pages/preview.dart';
 
 void main() {
   Future.delayed(const Duration(seconds: 3), () {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'mynavigationinfo.dart';
+import 'package:copybook/pages/mynavigationinfo.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
