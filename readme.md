@@ -4,10 +4,15 @@
 - 下载链接：https://home.mydata.top:8095/share/dkxS22x1 提取码：1wde
 
 # 汉字字帖
+
 - 字帖（Linux）
-![](./readme.res/hanzi-linux-1.png)
+  ![](./readme.res/hanzi-linux-1.png)
+
+  ![](readme.res/hanzi-linux-2.png)
+
 - 字帖（Android）
-![拼音界面](./readme.res/hanzi-android-1.jpg)
+  ![拼音界面](./readme.res/hanzi-android-1.jpg)
+
 - 字帖（Windows）
 ![](./readme.res/hanzi-windows-1.png)
 
