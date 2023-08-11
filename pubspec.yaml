@@ -47,6 +47,8 @@ dependencies:
   encrypt: ^5.0.1
   crypto: ^3.0.3
   pointycastle: ^3.7.3
+  event_bus: ^2.0.0
+  image: ^4.0.17
 
 dev_dependencies:
   flutter_test:

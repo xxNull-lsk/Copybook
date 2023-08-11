@@ -1,14 +1,12 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:ui';
 
-import 'package:copybook/backend/stroke.dart';
+import 'package:copybook/global.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:image/image.dart' as im;
-import 'package:sqflite/sqflite.dart';
 
 enum GridType {
   gridTypeMi,
@@ -16,6 +14,12 @@ enum GridType {
   gridTypeFang,
   gridTypeHui,
   gridTypeVertical,
+}
+
+class HanZiEvent {
+  int pageIndex;
+  int indexInPage;
+  HanZiEvent(this.pageIndex, this.indexInPage);
 }
 
 class HanZi {
@@ -288,12 +292,12 @@ class HanZi {
     return recorder.endRecording();
   }
 
-  Future<void> onDrawStroke(List<dynamic> stroke, PdfGraphics pdfCanvas,
-      PdfPoint size, int indexInPage) async {
+  List<int> mDrawingStroke = [];
+  Future<bool> onDrawStroke(List<dynamic> stroke, PdfGraphics pdfCanvas,
+      PdfPoint size, int pageIndex, int indexInPage) async {
     if (mStrokes == null) {
-      return;
+      return false;
     }
-
     for (int indexInStroke = 0;
         indexInStroke < stroke.length;
         indexInStroke++) {
@@ -304,12 +308,14 @@ class HanZi {
         continue;
       }
 
-      var img = PdfImage.fromImage(mPdf.document,
-          image: im.Image.fromBytes(
-              width: image.width,
-              height: image.height,
-              bytes: imageData.buffer,
-              order: im.ChannelOrder.rgba));
+      // TODO: 这个地方非常慢，需要优化。
+      var img = im.Image.fromBytes(
+          width: image.width,
+          height: image.height,
+          bytes: imageData.buffer,
+          order: im.ChannelOrder.rgba);
+
+      var pdfImage = PdfImage.fromImage(mPdf.document, image: img);
 
       var pos = _pos(indexInPage + indexInStroke);
       var row = pos[0];
@@ -318,16 +324,19 @@ class HanZi {
       var y =
           mStartY + (row + 0) * (mItemHeight + mLinePinyin + mLineSpace) - 0.7;
       pdfCanvas.drawImage(
-          img,
+          pdfImage,
           x * cm + PdfPageFormat.standard.marginLeft,
           (mPageHeight - y) * cm - PdfPageFormat.standard.marginTop,
           mFontSize * 0.8,
           mFontSize * 0.8);
     }
+    Global.eventBus.fire(HanZiEvent(pageIndex, indexInPage));
+    mDrawingStroke.remove(pageIndex * mColCount * mRowCount + indexInPage);
+    return true;
   }
 
-  Future<void> onDrawMutilateText(
-      String str, PdfGraphics canvas, PdfPoint size, bool bStroke) async {
+  Future<void> onDrawMutilateText(int pageIndex, String str, PdfGraphics canvas,
+      PdfPoint size, bool bStroke) async {
     drawBank(canvas);
     for (int index = 0; index < str.length; index++) {
       var pos = _next();
@@ -355,14 +364,14 @@ class HanZi {
       canvas.saveContext();
       if (bStroke) {
         var dataStroke = mStrokes?[c.substring(0, 1)];
-        if (dataStroke == null) {
-          continue;
+        if (dataStroke != null) {
+          List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
+          mDrawingStroke.add(pageIndex * mColCount * mRowCount + mCurrIndex);
+          onDrawStroke(stroke, canvas, size, pageIndex, mCurrIndex);
+          mCurrIndex += stroke.length;
         }
-        List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
-        onDrawStroke(stroke, canvas, size, mCurrIndex);
-        mCurrIndex += stroke.length;
         // 补齐笔画的空格，以达到行对齐的目的
-        //mCurrIndex = (mCurrIndex / mColCount).round() * mColCount;
+        mCurrIndex = (mCurrIndex.toDouble() / mColCount).ceil() * mColCount;
       }
     }
   }
@@ -430,8 +439,31 @@ class HanZi {
         (pageIndex < mMaxPageCount || mMaxPageCount <= 0)) {
       pageIndex++;
       end = begin + mColCount * mRowCount;
+
       if (end > str.length) {
         end = str.length;
+      }
+      if (bStroke && mStrokes != null) {
+        int indexInPage = 0;
+        end = begin;
+        while (end < str.length) {
+          String c = str.substring(end, end + 1);
+          var dataStroke = mStrokes?[c];
+          if (dataStroke == null) {
+            if (indexInPage + 1 > mColCount * mRowCount) {
+              break;
+            }
+            indexInPage += 1;
+          } else {
+            List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
+            if (indexInPage + stroke.length + 1 > mColCount * mRowCount) {
+              break;
+            }
+            indexInPage += stroke.length + 1;
+          }
+          end++;
+          indexInPage = (indexInPage / mColCount).ceil() * mColCount;
+        }
       }
       String strPage = str.substring(begin, end);
 
@@ -445,7 +477,8 @@ class HanZi {
                         context.page.pageFormat.height),
                     painter: (canvas, size) {
                       mCurrIndex = 0;
-                      onDrawMutilateText(strPage, canvas, size, bStroke);
+                      onDrawMutilateText(
+                          pageIndex - 1, strPage, canvas, size, bStroke);
                     }),
               ));
         },

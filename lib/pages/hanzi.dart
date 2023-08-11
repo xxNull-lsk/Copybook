@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:copybook/backend/stroke.dart';
 import 'package:copybook/engine/hanzi.dart';
+import 'package:copybook/global.dart';
+import 'package:copybook/pages/loadingoverlay.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
@@ -25,6 +27,7 @@ class HanZiPage extends StatefulWidget {
 }
 
 class _HanZiPageState extends State<HanZiPage> {
+  bool isLoading = false;
   Map<String, dynamic> mConfig = {};
   Map<String, dynamic> mFonts = {};
   List<DropdownMenuItem<String>> mFontItems = [];
@@ -50,8 +53,10 @@ class _HanZiPageState extends State<HanZiPage> {
   String mLineColor = '粉色';
   GridType mGridType = GridType.gridTypeFang;
   String mTextColor = "全部粉色";
-  String mCopybookType = '笔划';
+  String mCopybookType = '常规';
+  int maxTextWhenDrawStroke = 32;
   bool mShowPinyin = false;
+  bool mGotoPreview = false;
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
   final TextEditingController mTextEditingController = TextEditingController();
   @override
@@ -67,7 +72,6 @@ class _HanZiPageState extends State<HanZiPage> {
       mConfig = jsonDecode(value);
       mFonts = mConfig["fonts"];
       mText = mConfig["text"];
-      mText = "你好返回四舍五入到最接近整数的数字的";
       mFontName = mConfig["default"];
       mFontItems.clear();
       mTextEditingController.text = mText;
@@ -79,16 +83,44 @@ class _HanZiPageState extends State<HanZiPage> {
       }
       flushImage();
     });
+    Global.eventBus.on<HanZiEvent>().listen((event) {
+      if (mHanZi.mDrawingStroke.isNotEmpty) {
+        return;
+      }
+      var used = DateTime.now().difference(mBeginDraw);
+      print("draw used: ${used.toString()}");
+      setState(() {
+        isLoading = false;
+      });
+      if (mGotoPreview) {
+        mGotoPreview = false;
+
+        Navigator.pushNamed(context, "preview", arguments: {
+          "title": widget.title,
+          "pdf": mHanZi.mPdf,
+        });
+      } else {
+        mHanZi.mPdf.save().then((pdfData) {
+          Printing.raster(pdfData, pages: [0]).every((page) {
+            page.toPng().then((value) {
+              mImageData = value;
+              setState(() {});
+            });
+            return true;
+          });
+        });
+      }
+    });
   }
 
   void doSave() async {
-    await doDraw(maxPageCount: -1);
+    setState(() {
+      isLoading = true;
+    });
 
-    Future.delayed(const Duration(microseconds: 1), () {
-      Navigator.pushNamed(context, "preview", arguments: {
-        "title": widget.title,
-        "pdf": mHanZi.mPdf,
-      });
+    mGotoPreview = true;
+    doDraw(maxPageCount: -1).then((value) {
+      mHanZi.mPdf.save();
     });
   }
 
@@ -237,7 +269,9 @@ class _HanZiPageState extends State<HanZiPage> {
   }
 
   Map<String, dynamic>? mStrokes;
-  Future<void> doDraw({maxPageCount = 1}) async {
+  var mBeginDraw = DateTime.now();
+  Future<bool> doDraw({maxPageCount = 1}) async {
+    mBeginDraw = DateTime.now();
     mHanZi = HanZi(mFonts);
     mHanZi.mFontName = mFontName;
     mHanZi.mGridType = mGridType;
@@ -263,21 +297,29 @@ class _HanZiPageState extends State<HanZiPage> {
         break;
       case "笔划":
         {
+          if (mText.length > maxTextWhenDrawStroke) {
+            mText = mText.substring(0, maxTextWhenDrawStroke);
+            mTextEditingController.value = TextEditingValue(
+              text: mText,
+              selection: TextSelection.fromPosition(TextPosition(
+                  affinity: TextAffinity.downstream, offset: mText.length)),
+            );
+          }
           if (mStrokes == null) {
-            int count = mHanZi.mRowCount;
-            if (count > mText.length) {
-              count = mText.length;
-            }
-            Backend.getStroke(mText.substring(0, count)).then((rep) {
+            Backend.getStroke(mText).then((rep) {
               if (rep.statusCode != 200 || rep.data["code"] != 0) {
-                return;
+                return false;
               }
               mStrokes = rep.data["data"];
               if (mStrokes!.keys.isEmpty) {
-                return;
+                return false;
               }
-              flushImage(maxPageCount: maxPageCount);
-              return;
+              if (maxPageCount == 1) {
+                flushImage();
+              } else {
+                doSave();
+              }
+              return false;
             });
           } else {
             mHanZi.mStrokes = mStrokes;
@@ -292,11 +334,19 @@ class _HanZiPageState extends State<HanZiPage> {
           await mHanZi.drawMutilateText(mText);
         }
     }
+    return true;
   }
 
-  Future<void> flushImage({maxPageCount = 1}) async {
-    doDraw(maxPageCount: maxPageCount).then((value) {
+  void flushImage() {
+    setState(() {
+      isLoading = true;
+    });
+    doDraw(maxPageCount: 1).then((value) {
       mHanZi.mPdf.save().then((pdfData) {
+        if (mCopybookType == "笔划") {
+          return;
+        }
+        isLoading = false;
         Printing.raster(pdfData, pages: [0]).every((page) {
           page.toPng().then((value) {
             mImageData = value;
@@ -312,6 +362,7 @@ class _HanZiPageState extends State<HanZiPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       child: TextField(
+        maxLength: mCopybookType == "笔划" ? maxTextWhenDrawStroke : null,
         maxLines: null,
         controller: mTextEditingController,
         onChanged: (value) {
@@ -335,38 +386,39 @@ class _HanZiPageState extends State<HanZiPage> {
   }
 
   Container getPreviewImage({double? maxWidthImage}) {
-    return mImageData.isNotEmpty
-        ? Container(
-            width: maxWidthImage,
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey,
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(8.0),
-              boxShadow: const [
-                BoxShadow(
-                  color: Colors.black,
-                  offset: Offset(
-                    5.0,
-                    5.0,
-                  ), //Offset
-                  blurRadius: 10.0,
-                  spreadRadius: 2.0,
-                ), //BoxShadow
-                BoxShadow(
-                  color: Colors.white,
-                  offset: Offset(0.0, 0.0),
-                  blurRadius: 0.0,
-                  spreadRadius: 0.0,
-                ), //BoxShadow
-              ],
-            ),
-            alignment: Alignment.topCenter,
-            child: Image.memory(mImageData),
-          )
-        : Container();
+    return Container(
+      width: maxWidthImage,
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.grey,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(8.0),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black,
+            offset: Offset(
+              5.0,
+              5.0,
+            ), //Offset
+            blurRadius: 10.0,
+            spreadRadius: 2.0,
+          ), //BoxShadow
+          BoxShadow(
+            color: Colors.white,
+            offset: Offset(0.0, 0.0),
+            blurRadius: 0.0,
+            spreadRadius: 0.0,
+          ), //BoxShadow
+        ],
+      ),
+      alignment: Alignment.topCenter,
+      child: LoadingOverlay(
+          isLoading: isLoading,
+          child:
+              mImageData.isNotEmpty ? Image.memory(mImageData) : Container()),
+    );
   }
 
   // 桌面布局
@@ -442,7 +494,7 @@ class _HanZiPageState extends State<HanZiPage> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            onPressed: doSave,
+            onPressed: isLoading ? null : doSave,
             icon: const Icon(Icons.save),
           ),
           const SizedBox(

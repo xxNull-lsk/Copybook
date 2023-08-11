@@ -44,7 +44,7 @@ class Backend {
 
     var path = "/res/stroke";
     var enc = await getEncryptData(path, timestamp, nonce, data);
-
+    var begin = DateTime.now();
     final response = await dio.post('https://blog.mydata.top:8681$path',
         data: data,
         options: Options(
@@ -59,7 +59,9 @@ class Backend {
             "Authorization_enc": enc
           },
         ));
-    print(response.data.toString());
+    //print(response.data.toString());
+    var used = DateTime.now().difference(begin);
+    print("get stroke used: ${used.toString()}");
     return response;
   }
 }

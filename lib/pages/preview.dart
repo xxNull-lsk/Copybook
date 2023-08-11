@@ -1,3 +1,5 @@
+import 'package:copybook/engine/hanzi.dart';
+import 'package:copybook/global.dart';
 import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -21,6 +23,7 @@ class PreviewPage extends StatefulWidget {
 }
 
 class _PreviewPageState extends State<PreviewPage> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +32,7 @@ class _PreviewPageState extends State<PreviewPage> {
       ),
       //drawer: const MyDrawer(),
       body: PdfPreview(
-        build: (format){
+        build: (format) {
           return widget.pdf.save();
         },
         canChangePageFormat: false,

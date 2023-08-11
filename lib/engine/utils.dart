@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:copybook/global.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -65,7 +66,7 @@ class Utils {
       },
     );
     final response =
-        await dio.post('https://blog.mydata.top:8681/api/common/tick_20230701',
+        await dio.post('${Global.backendURL}/api/common/tick_20230701',
             data: data,
             options: Options(
               sendTimeout: const Duration(seconds: 10),
