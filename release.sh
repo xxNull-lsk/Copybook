@@ -16,6 +16,13 @@ fi
 fixed_version=`cat .fixed_version`
 
 version=${major_version}.${minor_version}.${fixed_version}
+
+read -p "版本号：$version 确定要发布版本？[Y]:"  ret
+if [ "$ret" != "Y" ]; then
+    echo "已取消"
+    exit 1
+fi
+
 git add .
 git commit -m "Release:$version"
 git push
