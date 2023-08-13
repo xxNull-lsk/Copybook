@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:copybook/backend/stroke.dart';
+import 'package:copybook/control/numberchange.dart';
 import 'package:copybook/engine/hanzi.dart';
 import 'package:copybook/global.dart';
 import 'package:copybook/pages/loadingoverlay.dart';
@@ -54,6 +55,7 @@ class _HanZiPageState extends State<HanZiPage> {
   GridType mGridType = GridType.gridTypeFang;
   String mTextColor = "全部粉色";
   String mCopybookType = '常规';
+  int mRepeatCount = 0;
   int maxTextWhenDrawStroke = 32;
   bool mShowPinyin = false;
   bool mGotoPreview = false;
@@ -67,6 +69,8 @@ class _HanZiPageState extends State<HanZiPage> {
       mImageData = value.buffer.asUint8List();
       setState(() {});
     });
+
+    mHanZi.clac().then((value) => mRepeatCount = (mHanZi.mColCount / 2).ceil());
 
     rootBundle.loadString("fonts/手写.json").then((value) {
       mConfig = jsonDecode(value);
@@ -251,6 +255,24 @@ class _HanZiPageState extends State<HanZiPage> {
           flushImage();
         },
       ),
+      const SizedBox(
+        width: 10,
+      ),
+      Visibility(
+        visible: mCopybookType == "半描字",
+        child: NumChangeWidget(
+            onValueChanged: (value) {
+              setState(() {
+                mRepeatCount = value;
+              });
+              flushImage();
+            },
+            num: mRepeatCount,
+            min: 1,
+            max: mGridType == GridType.gridTypeVertical
+                ? mHanZi.mRowCount
+                : mHanZi.mColCount),
+      )
     ];
   }
 
@@ -288,7 +310,7 @@ class _HanZiPageState extends State<HanZiPage> {
         await mHanZi.drawTextPreLine(mText, repeat: 1);
         break;
       case "半描字":
-        await mHanZi.drawTextPreLine(mText, repeat: 0.5);
+        await mHanZi.drawTextPreLine(mText, repeat: mRepeatCount);
         break;
       case "隔行":
         {

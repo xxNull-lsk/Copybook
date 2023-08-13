@@ -57,20 +57,24 @@ class HanZi {
   Future<void> clac() async {
     //mPageWidth = PdfPageFormat.a4.width;
     //mPageHeight = PdfPageFormat.a4.height;
+    Map<String, dynamic> cfg = {};
     mPdf = pw.Document();
     var fontConfig = fonts[mFontName];
-    var fontData = await rootBundle.load("fonts/手写/${fontConfig["font_file"]}");
-    final font = PdfTtfFont(mPdf.document, fontData);
-    mPdf.document.fonts.add(font);
-    mSideSpace = 0;
+    if (fontConfig != null) {
+      var fontData =
+          await rootBundle.load("fonts/手写/${fontConfig["font_file"]}");
+      final font = PdfTtfFont(mPdf.document, fontData);
+      mPdf.document.fonts.add(font);
 
-    Map<String, dynamic> cfg = fonts[mFontName];
-    if (cfg.containsKey("font_size")) {
-      mFontSize = cfg["font_size"].toDouble();
+      cfg = fonts[mFontName];
+      if (cfg.containsKey("font_size")) {
+        mFontSize = cfg["font_size"].toDouble();
+      }
+      if (cfg.containsKey("font_scan")) {
+        mFontScan = cfg["font_scan"].toDouble();
+      }
     }
-    if (cfg.containsKey("font_scan")) {
-      mFontScan = cfg["font_scan"].toDouble();
-    }
+    mSideSpace = 0;
 
     mDocWidth = mPageWidth - mSideSpace * 2;
     mDocHeight = mPageHeight - mSideSpace * 2;
@@ -376,17 +380,24 @@ class HanZi {
     }
   }
 
-  Future<void> drawTextPreLine(String str, {double repeat = 0}) async {
+  Future<void> drawTextPreLine(String str, {var repeat = 0}) async {
     int count = mColCount;
+    count = mColCount;
     if (mGridType == GridType.gridTypeVertical) {
       count = mRowCount;
+    }
+    int repeatCount = 0;
+    if (repeat.runtimeType == double) {
+      repeatCount = (count * repeat as double).round();
+    } else if (repeat.runtimeType == int) {
+      repeatCount = repeat as int;
     }
     // 填充，每行数据
     String lineText = "";
     for (var i = 0; i < str.length; i++) {
       lineText += str[i];
       for (var c = 0; c < count - 1; c++) {
-        if (c + 1 >= count * repeat) {
+        if (c + 1 >= repeatCount) {
           lineText += ' ';
         } else {
           lineText += str[i];
