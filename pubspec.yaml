@@ -49,6 +49,7 @@ dependencies:
   pointycastle: ^3.7.3
   event_bus: ^2.0.0
   image: ^4.0.17
+  bitmap: ^0.1.3
 
 dev_dependencies:
   flutter_test:

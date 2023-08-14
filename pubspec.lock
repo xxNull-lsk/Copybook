@@ -49,6 +49,14 @@ packages:
       url: "https://pub.flutter-io.cn"
     source: hosted
     version: "2.0.7"
+  bitmap:
+    dependency: "direct main"
+    description:
+      name: bitmap
+      sha256: d4ec0147d64eff00efbbeead5c04d517ea4fbb528022adaa3551e3586e80f4d4
+      url: "https://pub.flutter-io.cn"
+    source: hosted
+    version: "0.1.3"
   boolean_selector:
     dependency: transitive
     description:

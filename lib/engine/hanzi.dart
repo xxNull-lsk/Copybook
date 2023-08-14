@@ -1,6 +1,4 @@
-import 'dart:convert';
-import 'dart:ui';
-
+import 'package:copybook/backend/stroke.dart';
 import 'package:copybook/global.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -248,75 +246,24 @@ class HanZi {
     return pos;
   }
 
-  Map<String, dynamic>? mStrokes;
-
-  Future<Picture> strokeToImage(List<dynamic> stroke, int step) async {
-    var h = 900;
-    final recorder = PictureRecorder();
-    Canvas canvas = Canvas(recorder);
-    var paint = Paint();
-
-    paint.color = Colors.black; //mTextColor[1];
-    paint.style = PaintingStyle.fill;
-    for (var strokeItem in stroke) {
-      var path = Path();
-      var items = strokeItem.split(" ");
-      for (var i = 0; i < items.length; i++) {
-        switch (items[i]) {
-          case "M":
-            path.moveTo(
-                double.parse(items[i + 1]), h - double.parse(items[i + 2]));
-            i += 2;
-            break;
-          case "L":
-            path.lineTo(
-                double.parse(items[i + 1]), h - double.parse(items[i + 2]));
-            i += 2;
-            break;
-          case "Q":
-            path.quadraticBezierTo(
-                double.parse(items[i + 1]),
-                h - double.parse(items[i + 2]),
-                double.parse(items[i + 3]),
-                h - double.parse(items[i + 4]));
-            i += 4;
-            break;
-          case "Z":
-            canvas.drawPath(path, paint);
-            break;
-          default:
-        }
-      }
-      step--;
-      if (step <= 0) {
-        break;
-      }
-    }
-
-    return recorder.endRecording();
-  }
-
   List<int> mDrawingStroke = [];
-  Future<bool> onDrawStroke(List<dynamic> stroke, PdfGraphics pdfCanvas,
+  Future<bool> onDrawStroke(List<dynamic>? stroke, PdfGraphics pdfCanvas,
       PdfPoint size, int pageIndex, int indexInPage) async {
-    if (mStrokes == null) {
+    if (stroke == null) {
       return false;
     }
     for (int indexInStroke = 0;
         indexInStroke < stroke.length;
         indexInStroke++) {
-      var picture = await strokeToImage(stroke, indexInStroke + 1);
-      var image = picture.toImageSync(1000, 1000);
-      var imageData = await image.toByteData();
-      if (imageData == null) {
+      var bmp = await Backend.strokeToImage(stroke, indexInStroke + 1,
+          (mFontSize * 3).round(), (mFontSize * 3).round());
+      if (bmp == null) {
         continue;
       }
-
-      // TODO: 这个地方非常慢，需要优化。
       var img = im.Image.fromBytes(
-          width: image.width,
-          height: image.height,
-          bytes: imageData.buffer,
+          width: bmp.width,
+          height: bmp.height,
+          bytes: bmp.content.buffer,
           order: im.ChannelOrder.rgba);
 
       var pdfImage = PdfImage.fromImage(mPdf.document, image: img);
@@ -367,12 +314,11 @@ class HanZi {
       canvas.drawString(canvas.defaultFont!, mFontSize, c, x * cm, y * cm);
       canvas.saveContext();
       if (bStroke) {
-        var dataStroke = mStrokes?[c.substring(0, 1)];
-        if (dataStroke != null) {
-          List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
+        var strokes = Backend.getCharStroke(c);
+        if (strokes != null) {
           mDrawingStroke.add(pageIndex * mColCount * mRowCount + mCurrIndex);
-          onDrawStroke(stroke, canvas, size, pageIndex, mCurrIndex);
-          mCurrIndex += stroke.length;
+          onDrawStroke(strokes, canvas, size, pageIndex, mCurrIndex);
+          mCurrIndex += strokes.length;
         }
         // 补齐笔画的空格，以达到行对齐的目的
         mCurrIndex = (mCurrIndex.toDouble() / mColCount).ceil() * mColCount;
@@ -454,26 +400,21 @@ class HanZi {
       if (end > str.length) {
         end = str.length;
       }
-      if (bStroke && mStrokes != null) {
+      if (bStroke) {
         int indexInPage = 0;
         end = begin;
         while (end < str.length) {
           String c = str.substring(end, end + 1);
-          var dataStroke = mStrokes?[c];
-          if (dataStroke == null) {
-            if (indexInPage + 1 > mColCount * mRowCount) {
-              break;
-            }
-            indexInPage += 1;
-          } else {
-            List<dynamic> stroke = jsonDecode(dataStroke["stroke"]);
-            if (indexInPage + stroke.length + 1 > mColCount * mRowCount) {
-              break;
-            }
-            indexInPage += stroke.length + 1;
+          indexInPage++;
+          var strokes = Backend.getCharStroke(c);
+          if (strokes != null) {
+            indexInPage += strokes.length;
+          }
+          indexInPage = (indexInPage / mColCount).ceil() * mColCount;
+          if (indexInPage > mColCount * mRowCount) {
+            break;
           }
           end++;
-          indexInPage = (indexInPage / mColCount).ceil() * mColCount;
         }
       }
       String strPage = str.substring(begin, end);

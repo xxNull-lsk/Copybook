@@ -56,7 +56,7 @@ class _HanZiPageState extends State<HanZiPage> {
   String mTextColor = "全部粉色";
   String mCopybookType = '常规';
   int mRepeatCount = 0;
-  int maxTextWhenDrawStroke = 32;
+  int maxTextWhenDrawStroke = 128;
   bool mShowPinyin = false;
   bool mGotoPreview = false;
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
@@ -232,7 +232,7 @@ class _HanZiPageState extends State<HanZiPage> {
   }
 
   List<DropdownMenuItem<String>> getCopybookTypes() {
-    List<String> items = ['常规', '不描字', '半描字', '全描字', '隔行', '笔划'];
+    List<String> items = ['常规', '不描字', '半描字', '全描字', '隔行', '笔顺'];
     List<DropdownMenuItem<String>> dropItems = [];
     for (var item in items) {
       dropItems.add(DropdownMenuItem(
@@ -290,7 +290,6 @@ class _HanZiPageState extends State<HanZiPage> {
     ];
   }
 
-  Map<String, dynamic>? mStrokes;
   var mBeginDraw = DateTime.now();
   Future<bool> doDraw({maxPageCount = 1}) async {
     mBeginDraw = DateTime.now();
@@ -317,7 +316,7 @@ class _HanZiPageState extends State<HanZiPage> {
           await mHanZi.drawMutilateText(mText, bSpaceLine: true);
         }
         break;
-      case "笔划":
+      case "笔顺":
         {
           if (mText.length > maxTextWhenDrawStroke) {
             mText = mText.substring(0, maxTextWhenDrawStroke);
@@ -327,13 +326,9 @@ class _HanZiPageState extends State<HanZiPage> {
                   affinity: TextAffinity.downstream, offset: mText.length)),
             );
           }
-          if (mStrokes == null) {
-            Backend.getStroke(mText).then((rep) {
-              if (rep.statusCode != 200 || rep.data["code"] != 0) {
-                return false;
-              }
-              mStrokes = rep.data["data"];
-              if (mStrokes!.keys.isEmpty) {
+          if (!Backend.containStroke(mText)) {
+            Backend.getStrokeFromServer(mText).then((ret) {
+              if (!ret) {
                 return false;
               }
               if (maxPageCount == 1) {
@@ -344,7 +339,6 @@ class _HanZiPageState extends State<HanZiPage> {
               return false;
             });
           } else {
-            mHanZi.mStrokes = mStrokes;
             await mHanZi.drawMutilateText(mText,
                 bSpaceLine: true, bStroke: true);
           }
@@ -365,7 +359,7 @@ class _HanZiPageState extends State<HanZiPage> {
     });
     doDraw(maxPageCount: 1).then((value) {
       mHanZi.mPdf.save().then((pdfData) {
-        if (mCopybookType == "笔划") {
+        if (mCopybookType == "笔顺") {
           return;
         }
         isLoading = false;
@@ -384,7 +378,7 @@ class _HanZiPageState extends State<HanZiPage> {
     return Container(
       padding: const EdgeInsets.all(12),
       child: TextField(
-        maxLength: mCopybookType == "笔划" ? maxTextWhenDrawStroke : null,
+        maxLength: mCopybookType == "笔顺" ? maxTextWhenDrawStroke : null,
         maxLines: null,
         controller: mTextEditingController,
         onChanged: (value) {
@@ -394,7 +388,6 @@ class _HanZiPageState extends State<HanZiPage> {
             selection: TextSelection.fromPosition(TextPosition(
                 affinity: TextAffinity.downstream, offset: value.length)),
           );
-          mStrokes = null;
           flushImage();
         },
         decoration: const InputDecoration(
