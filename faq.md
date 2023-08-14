@@ -26,6 +26,12 @@
     ```
 
 # MacOS下遇到的问题
+- 编译错误
+```bash
+    [!] The name of the given podspec `platform_device_id` doesn't match the expected one `platform_device_id_v3
+```
+`macos/Flutter/ephemeral/.symlinks/plugins/platform_device_id_v3/macos/platform_device_id.podspec`，其中`s.name`改为`platform_device_id_v3`
+
 - 无法访问网络
 `macos/Runner/DebugProfile.entitlements`和 `macos/Runner/Release.entitlements`中新增：
 ```xml

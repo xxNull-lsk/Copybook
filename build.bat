@@ -22,3 +22,4 @@ call flutter build windows --release --build-number %build_number% --build-name=
 mkdir dist\copybook
 xcopy /e /Y .\build\windows\runner\Release .\dist\copybook\
 %~dp0\tools\7z a %~dp0\dist\copybook_%version%_windows_x64.7z %~dp0\dist\copybook
+scp -P 6302 %~dp0\dist\copybook_%version%_windows_x64.7z allan@home.mydata.top:/mnt/zhanmei/nas/allan/ÎÒµÄÈí¼þ/copybook/
