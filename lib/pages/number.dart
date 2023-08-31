@@ -50,9 +50,6 @@ class _NumberPageState extends State<NumberPage> {
   String mCopybookType = '常规';
   bool mShowHanzi = false;
   String mText = "";
-  String mShengDiao = "ā á ǎ à    ō ó ǒ ò\n"
-      "ē é ě è    ī  í  ǐ  ì\n"
-      "ū ú ǔ ù    ǖ ǘ ǚ ǜ";
 
   Uint8List mImageData = ByteData(0).buffer.asUint8List();
   final TextEditingController mTextEditingController = TextEditingController();
