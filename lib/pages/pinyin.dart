@@ -26,6 +26,7 @@ class _PinYinPageState extends State<PinYinPage> {
   Map<String, Color> mLineColorItems = {
     '粉色': Colors.pinkAccent,
     '浅绿': Colors.lightGreen,
+    '蓝色': Colors.lightBlue,
     '黑色': Colors.black,
   };
   Map<String, List<Color>> mTextColorsItems = {
@@ -33,6 +34,8 @@ class _PinYinPageState extends State<PinYinPage> {
     '首列粉色，其余浅灰': [Colors.pink, Colors.grey.shade400],
     '全部浅绿': [Colors.lightGreen, Colors.lightGreen],
     '首列浅绿，其余浅灰': [Colors.lightGreen, Colors.grey.shade400],
+    '全部浅蓝': [Colors.lightBlue, Colors.lightBlue],
+    '首列浅蓝，其余浅灰': [Colors.lightBlue, Colors.grey.shade400],
     '全部黑色': [Colors.black, Colors.black],
     '首列黑色，其余浅灰': [Colors.black, Colors.grey.shade400],
     '全部浅灰': [Colors.grey.shade400, Colors.grey.shade400],
