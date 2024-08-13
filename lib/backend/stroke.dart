@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart' as cy;
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:encrypt/encrypt.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pointycastle/asymmetric/api.dart';
@@ -78,20 +79,23 @@ class Backend {
     var path = "/res/stroke";
     var enc = await getEncryptData(path, timestamp, nonce, data);
     var begin = DateTime.now();
-    final response = await dio.post('https://blog.mydata.top:8681$path',
-        data: data,
-        options: Options(
-          sendTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {
-            "Content-Type": "application/json",
-            'Content-Length': data.length.toString(),
-            "Authorization_type": "AUTH-SHA256-RSA-ENC",
-            "Authorization_nonce": nonce,
-            "Authorization_timestamp": timestamp,
-            "Authorization_enc": enc
-          },
-        ));
+
+    var response = await compute((message) {
+      return dio.post('https://blog.mydata.top:8681$path',
+          data: data,
+          options: Options(
+            sendTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+            headers: {
+              "Content-Type": "application/json",
+              'Content-Length': data.length.toString(),
+              "Authorization_type": "AUTH-SHA256-RSA-ENC",
+              "Authorization_nonce": nonce,
+              "Authorization_timestamp": timestamp,
+              "Authorization_enc": enc
+            },
+          ));
+    }, null);
     //print(response.data.toString());
     var used = DateTime.now().difference(begin);
     print("get stroke used: ${used.toString()}");
